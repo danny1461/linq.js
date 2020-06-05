@@ -1,0 +1,15 @@
+{
+  "name": "linq-ts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "dependencies": {
+    "typescript": "^3.9.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Daniel Flynn: https://dandi.dev",
+  "license": "ISC"
+}
