@@ -962,28 +962,6 @@ export class Linq<T> implements Iterable<T> {
         return this.orderByDescending(keySelector);
     }
     /**
-     * Filters a sequence of values based on a predicate
-     * 
-     * @param predicate A function to test each element for a condition
-     */
-    public where(predicate: (item: T, index: number) => boolean): Linq<T> {
-        let that = this;
-
-        function* where() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>,
-                index = 0;
-
-            while (!(iterValue = iter.next()).done) {
-                if (predicate(iterValue.value, index++)) {
-                    yield iterValue.value;
-                }
-            }
-        }
-
-        return new Linq<T>(where);
-    }
-    /**
      * Creates an array from a the sequence
      */
     public toArray() : T[] {
@@ -1085,6 +1063,28 @@ export class Linq<T> implements Iterable<T> {
     }
     public union(arr: T[]) : Linq<T> {
         throw 'Not Implemented';
+    }
+    /**
+     * Filters a sequence of values based on a predicate
+     * 
+     * @param predicate A function to test each element for a condition
+     */
+    public where(predicate: (item: T, index: number) => boolean): Linq<T> {
+        let that = this;
+
+        function* where() {
+            let iter: Iterator<T> = that.getIter(),
+                iterValue: IteratorValue<T>,
+                index = 0;
+
+            while (!(iterValue = iter.next()).done) {
+                if (predicate(iterValue.value, index++)) {
+                    yield iterValue.value;
+                }
+            }
+        }
+
+        return new Linq<T>(where);
     }
 }
 

@@ -835,34 +835,6 @@ var Linq = /** @class */ (function () {
         return this.orderByDescending(keySelector);
     };
     /**
-     * Filters a sequence of values based on a predicate
-     *
-     * @param predicate A function to test each element for a condition
-     */
-    Linq.prototype.where = function (predicate) {
-        var that = this;
-        function where() {
-            var iter, iterValue, index;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        iter = that.getIter(), index = 0;
-                        _a.label = 1;
-                    case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 4];
-                        if (!predicate(iterValue.value, index++)) return [3 /*break*/, 3];
-                        return [4 /*yield*/, iterValue.value];
-                    case 2:
-                        _a.sent();
-                        _a.label = 3;
-                    case 3: return [3 /*break*/, 1];
-                    case 4: return [2 /*return*/];
-                }
-            });
-        }
-        return new Linq(where);
-    };
-    /**
      * Creates an array from a the sequence
      */
     Linq.prototype.toArray = function () {
@@ -916,6 +888,34 @@ var Linq = /** @class */ (function () {
     };
     Linq.prototype.union = function (arr) {
         throw 'Not Implemented';
+    };
+    /**
+     * Filters a sequence of values based on a predicate
+     *
+     * @param predicate A function to test each element for a condition
+     */
+    Linq.prototype.where = function (predicate) {
+        var that = this;
+        function where() {
+            var iter, iterValue, index;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        iter = that.getIter(), index = 0;
+                        _a.label = 1;
+                    case 1:
+                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 4];
+                        if (!predicate(iterValue.value, index++)) return [3 /*break*/, 3];
+                        return [4 /*yield*/, iterValue.value];
+                    case 2:
+                        _a.sent();
+                        _a.label = 3;
+                    case 3: return [3 /*break*/, 1];
+                    case 4: return [2 /*return*/];
+                }
+            });
+        }
+        return new Linq(where);
     };
     return Linq;
 }());
