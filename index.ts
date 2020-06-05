@@ -1,4 +1,9 @@
 /**
+ * Linq.js by Daniel Flynn
+ * https://dandi.dev
+ */
+
+/**
  * Represents an iteration step
  */
 export interface IteratorValue<T> {
@@ -34,6 +39,14 @@ export interface IGrouping<TKey, TGroup> {
 export interface IKeyValuePair<TKey, TValue> {
     key: TKey;
     value: TValue;
+}
+
+/**
+ * Represents a step in an ordering operation
+ */
+interface OrderingRecord<T> {
+    keySelector: (item: T) => any;
+    order: number;
 }
 
 function itemAsNumberSelector(item: any): number {
@@ -131,7 +144,7 @@ export class Linq<T> implements Iterable<T> {
     public getIter: () => Iterator<T>;
 
     /**
-     * Initializes an empty Linq object. Mostly useless
+     * Initializes an empty Linq object
      */
     public constructor();
     /**
@@ -152,13 +165,16 @@ export class Linq<T> implements Iterable<T> {
      * @param arg
      */
     public constructor(arg?: any) {
-        arg = arg || [];
-
-        if (typeof arg == 'function') {
-            this.getIter = arg;
+        if (arg) {
+            if (typeof arg == 'function') {
+                this.getIter = arg;
+            }
+            else {
+                this.getIter = arg[Symbol.iterator].bind(arg);
+            }
         }
         else {
-            this.getIter = arg[Symbol.iterator].bind(arg);
+            this.getIter = (<any>function*(){});
         }
     }
 
@@ -192,9 +208,9 @@ export class Linq<T> implements Iterable<T> {
      * @param resultSelector
      */
     public aggregate(func: Function, seed?: any, resultSelector?: Function): any {
-        let accumulate = seed,
-            iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>;
+        let iter: Iterator<T> = this.getIter(),
+            iterValue: IteratorValue<T>,
+            accumulate = seed;
         
         while (!(iterValue = iter.next()).done) {
             accumulate = func(iterValue.value, accumulate);
@@ -669,11 +685,21 @@ export class Linq<T> implements Iterable<T> {
 
         return min;
     }
-    public orderBy<TKey>(keySelector: (item: T, index: number) => TKey): Linq<T> {
-        throw 'Not Implemented';
+    /**
+     * Sorts the elements of a sequence in ascending order according to a key
+     * 
+     * @param keySelector A function to extract a key from an element
+     */
+    public orderBy(keySelector: (item: T) => any): LinqOrdered<T> {
+        return new LinqOrdered(this, keySelector, true);
     }
-    public orderByDescending<TKey>(keySelector: (item: T, index: number) => TKey): Linq<T> {
-        throw 'Not Implemented';
+    /**
+     * Sorts the elements of a sequence in descending order according to a key
+     * 
+     * @param keySelector A function to extract a key from an element
+     */
+    public orderByDescending(keySelector: (item: T) => any): LinqOrdered<T> {
+        return new LinqOrdered(this, keySelector, false);
     }
     /**
      * Prepends the provided values to the front of the sequence
@@ -916,11 +942,21 @@ export class Linq<T> implements Iterable<T> {
 
         return new Linq<T>(takeWhile);
     }
-    public thenBy<TKey>(keySelector: (item: T, index: number) => TKey): Linq<T> {
-        throw 'Not Implemented';
+    /**
+     * Performs a subsequent ordering of the elements in a sequence in ascending order according to a key
+     * 
+     * @param keySelector A function to extract a key from each element
+     */
+    public thenBy(keySelector: (item: T) => any): Linq<T> {
+        return this.orderBy(keySelector);
     }
-    public thenByDescending<TKey>(keySelector: (item: T, index: number) => TKey): Linq<T> {
-        throw 'Not Implemented';
+    /**
+     * Performs a subsequent ordering of the elements in a sequence in descending order according to a key
+     * 
+     * @param keySelector A function to extract a key from each element
+     */
+    public thenByDescending(keySelector: (item: T) => any): Linq<T> {
+        return this.orderByDescending(keySelector);
     }
     /**
      * Filters a sequence of values based on a predicate
@@ -1044,5 +1080,97 @@ export class Linq<T> implements Iterable<T> {
     }
     public union(arr: T[]) : Linq<T> {
         throw 'Not Implemented';
+    }
+}
+
+export class LinqOrdered<T> extends Linq<T> {
+    /* Instance Members */
+
+    private dataIterator: () => Iterator<T>;
+    private ordering: OrderingRecord<T>[] = [];
+
+    public constructor(iter: Iterable<T>, keySelector: (item: T) => any, ascending: boolean);
+    public constructor(iter: Iterable<T>, keySelector: (item: T) => any, ascending: boolean, ordering: OrderingRecord<T>[]);
+    public constructor(iter: Iterable<T>, keySelector: (item: T) => any, ascending: boolean, ordering?: OrderingRecord<T>[]) {
+        super();
+
+        this.dataIterator = iter[Symbol.iterator].bind(iter);
+        if (ordering) {
+            this.ordering = ordering;
+        }
+
+        this.ordering.push({
+            keySelector,
+            order: ascending ? 1 : -1
+        });
+        this.getIter = (<any>this.orderingFunc);
+    }
+
+    private *orderingFunc(): Generator<T, void, any> {
+        let iter: Iterator<T> = this.dataIterator(),
+            iterValue: IteratorValue<T>,
+            sortedValues: T[] = [];
+        
+        while (!(iterValue = iter.next()).done) {
+            sortedValues.push(iterValue.value);
+        }
+
+        // Sorting processes
+        sortedValues.sort((a: T, b: T) => {
+            for (let i = 0; i < this.ordering.length; i++) {
+                let fieldA = this.ordering[i].keySelector(a),
+                    fieldB = this.ordering[i].keySelector(b);
+                
+                if (fieldA < fieldB) {
+                    return -1 * this.ordering[i].order;
+                }
+                else if (fieldA > fieldB) {
+                    return 1 * this.ordering[i].order;
+                }
+            }
+            
+            return 0;
+        });
+
+        // Output values
+        iter = sortedValues[Symbol.iterator]();
+        while (!(iterValue = iter.next()).done) {
+            yield iterValue.value;
+        }
+    }
+
+    /* Overrides */
+
+    /**
+     * Sorts the elements of a sequence in ascending order according to a key. WARNING: will overide the previous ordering call
+     * 
+     * @param keySelector A function to extract a key from an element
+     */
+    public orderBy(keySelector: (item: T) => any): LinqOrdered<T> {
+        return new LinqOrdered(this, keySelector, true);
+    }
+    /**
+     * Sorts the elements of a sequence in descending order according to a key. WARNING: will overide the previous ordering call
+     * 
+     * @param keySelector A function to extract a key from an element
+     */
+    public orderByDescending(keySelector: (item: T) => any): LinqOrdered<T> {
+        return new LinqOrdered(this, keySelector, false);
+    }
+    /**
+     * Performs a subsequent ordering of the elements in a sequence in ascending order according to a key
+     * 
+     * @param keySelector A function to extract a key from each element
+     */
+    public thenBy(keySelector: (item: T) => any): Linq<T> {
+        return new LinqOrdered(this, keySelector, true, this.ordering.slice(0));
+    }
+    /**
+     * Performs a subsequent ordering of the elements in a sequence in descending order according to a key
+     * 
+     * @param keySelector A function to extract a key from each element
+     */
+    public thenByDescending(keySelector: (item: T) => any): Linq<T> {
+        return new LinqOrdered(this, keySelector, false, this.ordering.slice(0));
     }
 }
