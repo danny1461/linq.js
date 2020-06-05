@@ -115,8 +115,15 @@ export class Linq<T> implements Iterable<T> {
      */
     public static range(min: number, max: number, step: number = 1): Linq<number> {
         function* range() {
+            if (max > min) {
             for (let i = min; i < max; i += step) {
                 yield i;
+            }
+        }
+            else {
+                for (let i = min; i > max; i += step) {
+                    yield i;
+                }
             }
         }
 

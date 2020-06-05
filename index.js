@@ -127,10 +127,11 @@ var Linq = /** @class */ (function () {
     Linq.range = function (min, max, step) {
         if (step === void 0) { step = 1; }
         function range() {
-            var i;
+            var i, i;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        if (!(max > min)) return [3 /*break*/, 5];
                         i = min;
                         _a.label = 1;
                     case 1:
@@ -142,7 +143,20 @@ var Linq = /** @class */ (function () {
                     case 3:
                         i += step;
                         return [3 /*break*/, 1];
-                    case 4: return [2 /*return*/];
+                    case 4: return [3 /*break*/, 9];
+                    case 5:
+                        i = min;
+                        _a.label = 6;
+                    case 6:
+                        if (!(i > max)) return [3 /*break*/, 9];
+                        return [4 /*yield*/, i];
+                    case 7:
+                        _a.sent();
+                        _a.label = 8;
+                    case 8:
+                        i += step;
+                        return [3 /*break*/, 6];
+                    case 9: return [2 /*return*/];
                 }
             });
         }
