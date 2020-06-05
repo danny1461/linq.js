@@ -58,6 +58,17 @@ function itemAsSelfSelector(item: any): any {
 }
 
 /**
+ * Compatibility for IE. Returns -1 for negative inputs, 1 for positive inputs, and 0 for zero inputs
+ * 
+ * @param num The number to check the sign of
+ */
+let getNumberSign = Math.sign || function(num: number): number {
+    return num != 0
+        ? num / Math.abs(num)
+        : 0;
+}
+
+/**
  * Used to represent any sequence of uniform values. Provides many helpful methods for manipulating that data.
  * Uses delayed execution patterns to only perform the operation when a resolving method type is called.
  * Implements [Symbol.iterator] to be compatible to with all iterable types.
@@ -114,12 +125,16 @@ export class Linq<T> implements Iterable<T> {
      * @param step The increment step size
      */
     public static range(min: number, max: number, step: number = 1): Linq<number> {
+        if (getNumberSign(max - min) != getNumberSign(step)) {
+            throw 'Infinite loop detected';
+        }
+
         function* range() {
             if (max > min) {
-            for (let i = min; i < max; i += step) {
-                yield i;
+                for (let i = min; i < max; i += step) {
+                    yield i;
+                }
             }
-        }
             else {
                 for (let i = min; i > max; i += step) {
                     yield i;
