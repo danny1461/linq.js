@@ -60,7 +60,7 @@ function itemAsSelfSelector(item) {
  */
 var Linq = /** @class */ (function () {
     /**
-     * Constructor implementation
+     * Initializes a Linq object wrapping the provided data
      *
      * @param arg
      */
@@ -80,9 +80,9 @@ var Linq = /** @class */ (function () {
         }
     }
     /**
-     * Linq.from implementation
+     * Converts an iterable, generator function, or enumerable object into a Linq object. Enumerable objects will be of type Linq<IKeyValuePair<string, any>>
      *
-     * @param arg
+     * @param arg The value to convert
      */
     Linq.from = function (arg) {
         if (typeof arg == 'object' && !arg[Symbol.iterator]) {
@@ -100,7 +100,7 @@ var Linq = /** @class */ (function () {
                             if (!(_i < _a.length)) return [3 /*break*/, 4];
                             i = _a[_i];
                             return [4 /*yield*/, {
-                                    key: i,
+                                    key: '' + i,
                                     value: arg[i]
                                 }];
                         case 2:
@@ -168,11 +168,11 @@ var Linq = /** @class */ (function () {
         return this.getIter();
     };
     /**
-     * Aggregate implementation
+     * Applies an accumulator function over a sequence
      *
-     * @param func
-     * @param seed
-     * @param resultSelector
+     * @param func An accumulator function to be invoked on each element
+     * @param seed If provided, the initial accumulator value
+     * @param resultSelector If provided, a function to transform the final accumulator value into the result value
      */
     Linq.prototype.aggregate = function (func, seed, resultSelector) {
         var iter = this.getIter(), iterValue, accumulate = seed;
@@ -256,9 +256,9 @@ var Linq = /** @class */ (function () {
         return new Linq(append);
     };
     /**
-     * Average implementation
+     * Computes the average of a sequence of number values
      *
-     * @param fieldSelector
+     * @param fieldSelector If provided, a transform function to apply to each element
      */
     Linq.prototype.average = function (fieldSelector) {
         fieldSelector = fieldSelector || itemAsNumberSelector;
@@ -334,9 +334,9 @@ var Linq = /** @class */ (function () {
         return false;
     };
     /**
-     * Count implementation
+     * Returns the number of elements in a sequence
      *
-     * @param predicate
+     * @param predicate If provided, a function to test each element for a condition
      */
     Linq.prototype.count = function (predicate) {
         var iter = this.getIter(), iterValue, count = 0, index = 0;
@@ -349,9 +349,9 @@ var Linq = /** @class */ (function () {
         return count;
     };
     /**
-     * Distinct implementation
+     * Returns distinct elements from a sequence by using the default equality comparer to compare values
      *
-     * @param fieldSelector
+     * @param fieldSelector If provided, the function to transform the element into a value for uniqueness checking
      */
     Linq.prototype.distinct = function (fieldSelector) {
         var that = this;
@@ -413,10 +413,10 @@ var Linq = /** @class */ (function () {
         return undefined;
     };
     /**
-     * GroupBy implementation
+     * Groups the elements of a sequence according to a specified key selector function
      *
-     * @param keySelector
-     * @param resultSelector
+     * @param keySelector A function to extract the key for each element
+     * @param resultSelector If provided, a function to create a result value from each group
      */
     Linq.prototype.groupBy = function (keySelector, resultSelector) {
         var that = this;
@@ -469,10 +469,10 @@ var Linq = /** @class */ (function () {
         throw 'Not Implemented';
     };
     /**
-     * JoinString implementation
+     * Concatenates the members of a collection, using the specified separator between each member
      *
-     * @param separator
-     * @param fieldSelector
+     * @param separator The string to use as a separator.separator is included in the returned string only if values has more than one element
+     * @param fieldSelector If provided, a function to transform the element into the desired format
      */
     Linq.prototype.joinString = function (separator, fieldSelector) {
         fieldSelector = fieldSelector || itemAsSelfSelector;
@@ -486,9 +486,9 @@ var Linq = /** @class */ (function () {
         return result;
     };
     /**
-     * Last implementation
+     * Returns the last element of a sequence
      *
-     * @param predicate
+     * @param predicate If provided, a function to test each element for a condition
      */
     Linq.prototype.last = function (predicate) {
         var iter = this.getIter(), iterValue, last = undefined, index = 0;
@@ -501,9 +501,9 @@ var Linq = /** @class */ (function () {
         return last;
     };
     /**
-     * Max implementation
+     * Returns the maximum value in a sequence of number values
      *
-     * @param fieldSelector
+     * @param fieldSelector If provided, a transform function to apply to each element
      */
     Linq.prototype.max = function (fieldSelector) {
         fieldSelector = fieldSelector || itemAsNumberSelector;
@@ -522,9 +522,9 @@ var Linq = /** @class */ (function () {
         return max;
     };
     /**
-     * Min implementation
+     * Returns the minimum value in a sequence of number values
      *
-     * @param fieldSelector
+     * @param fieldSelector If provided, a transform function to apply to each element
      */
     Linq.prototype.min = function (fieldSelector) {
         fieldSelector = fieldSelector || itemAsNumberSelector;
@@ -638,15 +638,15 @@ var Linq = /** @class */ (function () {
         return new Linq(select);
     };
     /**
-     * SelectMany implementation
+     * Projects each element of a sequence to an Iterable<T> and flattens the resulting sequences into one sequence
      *
-     * @param itemsSelector
-     * @param resultSelector
+     * @param itemsSelector A transform function to apply to each element of the input sequence
+     * @param resultSelector If provided, a transform function to apply to each element of the intermediate sequence
      */
     Linq.prototype.selectMany = function (itemsSelector, resultSelector) {
         var that = this;
         function selectMany() {
-            var iter, iterValue, index, items, iterChild, iterChildValue;
+            var iter, iterValue, index, subCollection, iterChild, iterChildValue;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -654,14 +654,14 @@ var Linq = /** @class */ (function () {
                         _a.label = 1;
                     case 1:
                         if (!!(iterValue = iter.next()).done) return [3 /*break*/, 7];
-                        items = itemsSelector(iterValue.value, index++);
+                        subCollection = itemsSelector(iterValue.value, index++);
                         if (!resultSelector) return [3 /*break*/, 3];
-                        return [4 /*yield*/, resultSelector(iterValue.value, items)];
+                        return [4 /*yield*/, resultSelector(iterValue.value, subCollection)];
                     case 2:
                         _a.sent();
                         return [3 /*break*/, 6];
                     case 3:
-                        iterChild = items[Symbol.iterator](), iterChildValue = void 0;
+                        iterChild = subCollection[Symbol.iterator](), iterChildValue = void 0;
                         _a.label = 4;
                     case 4:
                         if (!!(iterChildValue = iterChild.next()).done) return [3 /*break*/, 6];
@@ -741,9 +741,9 @@ var Linq = /** @class */ (function () {
         return new Linq(skipWhile);
     };
     /**
-     * Sum implementation
+     * Computes the sum of a sequence
      *
-     * @param fieldSelector
+     * @param fieldSelector If provided, a transform function to apply to each element
      */
     Linq.prototype.sum = function (fieldSelector) {
         fieldSelector = fieldSelector || itemAsNumberSelector;
@@ -845,10 +845,10 @@ var Linq = /** @class */ (function () {
         return result;
     };
     /**
-     * ToMap implementation
+     * Creates a Map from a sequence according to a specified key selector function
      *
-     * @param keySelector
-     * @param valueSelector
+     * @param keySelector A function to extract a key from each element
+     * @param valueSelector If provided, a transform function to produce a result element value from each element
      */
     Linq.prototype.toMap = function (keySelector, valueSelector) {
         var iter = this.getIter(), iterValue, result = new Map(), index = 0;
@@ -861,10 +861,10 @@ var Linq = /** @class */ (function () {
         return result;
     };
     /**
-     * ToObject implementation
+     * Creates an Object from a sequence according to a specified key selector function
      *
-     * @param keySelector
-     * @param valueSelector
+     * @param keySelector A function to extract a key from each element
+     * @param valueSelector If provided, a transform function to produce a result element value from each element
      */
     Linq.prototype.toObject = function (keySelector, valueSelector) {
         var iter = this.getIter(), iterValue, result = {}, index = 0;

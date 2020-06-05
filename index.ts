@@ -86,16 +86,16 @@ export class Linq<T> implements Iterable<T> {
      */
     public static from(obj: object): Linq<IKeyValuePair<string, any>>;
     /**
-     * Linq.from implementation
+     * Converts an iterable, generator function, or enumerable object into a Linq object. Enumerable objects will be of type Linq<IKeyValuePair<string, any>>
      * 
-     * @param arg
+     * @param arg The value to convert
      */
     public static from(arg: any): Linq<any> {
         if (typeof arg == 'object' && !arg[Symbol.iterator]) {
             let objectEnumerator = function*() {
                 for (let i in arg) {
                     yield {
-                        key: i,
+                        key: '' + i,
                         value: arg[i]
                     };
                 }
@@ -148,7 +148,7 @@ export class Linq<T> implements Iterable<T> {
      */
     public constructor();
     /**
-     * Initializes a Linq object wrapping the provided data
+     * Initializes a Linq object wrapping the provided iterable
      * 
      * @param data The iterable data to wrap
      */
@@ -160,7 +160,7 @@ export class Linq<T> implements Iterable<T> {
      */
     public constructor(generator: () => Generator<T, void, any>)
     /**
-     * Constructor implementation
+     * Initializes a Linq object wrapping the provided data
      * 
      * @param arg
      */
@@ -186,12 +186,18 @@ export class Linq<T> implements Iterable<T> {
     }
 
     /**
+     * Applies an accumulator function over a sequence
+     * 
+     * @param func An accumulator function to be invoked on each element
+     */
+    public aggregate<U>(func: (item: T, accumulate: U) => U): U;
+    /**
      * Applies an accumulator function over a sequence. The specified seed value is used as the initial accumulator value.
      * 
      * @param func An accumulator function to be invoked on each element
      * @param seed The initial accumulator value
      */
-    public aggregate<U>(func: (item: T, accumulate: U) => U, seed?: U): U;
+    public aggregate<U>(func: (item: T, accumulate: U) => U, seed: U): U;
     /**
      * Applies an accumulator function over a sequence. The specified seed value is used as the initial accumulator value, and the specified function is used to select the result value.
      * 
@@ -201,11 +207,11 @@ export class Linq<T> implements Iterable<T> {
      */
     public aggregate<U, V>(func: (item: T, accumulate: U) => U, seed: U, resultSelector: (accumulate: U) => V): V;
     /**
-     * Aggregate implementation
+     * Applies an accumulator function over a sequence
      * 
-     * @param func
-     * @param seed
-     * @param resultSelector
+     * @param func An accumulator function to be invoked on each element
+     * @param seed If provided, the initial accumulator value
+     * @param resultSelector If provided, a function to transform the final accumulator value into the result value
      */
     public aggregate(func: Function, seed?: any, resultSelector?: Function): any {
         let iter: Iterator<T> = this.getIter(),
@@ -294,9 +300,9 @@ export class Linq<T> implements Iterable<T> {
      */
     public average(fieldSelector: (item: T, index: number) => number): number|undefined;
     /**
-     * Average implementation
+     * Computes the average of a sequence of number values
      * 
-     * @param fieldSelector
+     * @param fieldSelector If provided, a transform function to apply to each element
      */
     public average(fieldSelector?: (item: T, index: number) => number): number|undefined {
         fieldSelector = fieldSelector || itemAsNumberSelector;
@@ -372,9 +378,9 @@ export class Linq<T> implements Iterable<T> {
      */
     public count(predicate: (item: T, index: number) => boolean): number;
     /**
-     * Count implementation
+     * Returns the number of elements in a sequence
      * 
-     * @param predicate
+     * @param predicate If provided, a function to test each element for a condition
      */
     public count(predicate?: (item: T, index: number) => boolean) {
         let iter: Iterator<T> = this.getIter(),
@@ -403,9 +409,9 @@ export class Linq<T> implements Iterable<T> {
      */
     public distinct(fieldSelector: (item: T, index: number) => any): Linq<T>;
     /**
-     * Distinct implementation
+     * Returns distinct elements from a sequence by using the default equality comparer to compare values
      * 
-     * @param fieldSelector
+     * @param fieldSelector If provided, the function to transform the element into a value for uniqueness checking
      */
     public distinct(fieldSelector?: (item: T, index: number) => any): Linq<T> {
         let that = this;
@@ -492,10 +498,10 @@ export class Linq<T> implements Iterable<T> {
      */
     public groupBy<TKey, TResult>(keySelector: (item: T, index: number) => TKey, resultSelector: (key: TKey, items: Linq<T>) => TResult): Linq<TResult>;
     /**
-     * GroupBy implementation
+     * Groups the elements of a sequence according to a specified key selector function
      * 
-     * @param keySelector
-     * @param resultSelector
+     * @param keySelector A function to extract the key for each element
+     * @param resultSelector If provided, a function to create a result value from each group
      */
     public groupBy(keySelector: Function, resultSelector?: Function) {
         let that = this;
@@ -558,10 +564,10 @@ export class Linq<T> implements Iterable<T> {
      */
     public joinString(separator: string, fieldSelector: (item: T, index: number) => any): string;
     /**
-     * JoinString implementation
+     * Concatenates the members of a collection, using the specified separator between each member
      * 
-     * @param separator
-     * @param fieldSelector
+     * @param separator The string to use as a separator.separator is included in the returned string only if values has more than one element
+     * @param fieldSelector If provided, a function to transform the element into the desired format
      */
     public joinString(separator: string, fieldSelector?: (item: T, index: number) => any): string {
         fieldSelector = fieldSelector || itemAsSelfSelector;
@@ -592,9 +598,9 @@ export class Linq<T> implements Iterable<T> {
      */
     public last(predicate: (item: T, index: number) => boolean): T|undefined;
     /**
-     * Last implementation
+     * Returns the last element of a sequence
      * 
-     * @param predicate
+     * @param predicate If provided, a function to test each element for a condition
      */
     public last(predicate?: (item: T, index: number) => boolean): T|undefined {
         let iter: Iterator<T> = this.getIter(),
@@ -623,9 +629,9 @@ export class Linq<T> implements Iterable<T> {
      */
     public max(fieldSelector: (item: T, index: number) => number): T|undefined;
     /**
-     * Max implementation
+     * Returns the maximum value in a sequence of number values
      * 
-     * @param fieldSelector
+     * @param fieldSelector If provided, a transform function to apply to each element
      */
     public max(fieldSelector?: (item: T, index: number) => number): T|undefined {
         fieldSelector = fieldSelector || itemAsNumberSelector;
@@ -661,9 +667,9 @@ export class Linq<T> implements Iterable<T> {
      */
     public min(fieldSelector: (item: T, index: number) => number): T|undefined;
     /**
-     * Min implementation
+     * Returns the minimum value in a sequence of number values
      * 
-     * @param fieldSelector
+     * @param fieldSelector If provided, a transform function to apply to each element
      */
     public min(fieldSelector?: (item: T, index: number) => number): T|undefined {
         fieldSelector = fieldSelector || itemAsNumberSelector;
@@ -774,14 +780,14 @@ export class Linq<T> implements Iterable<T> {
      * @param itemsSelector A transform function to apply to each element of the input sequence
      * @param resultSelector A transform function to apply to each element of the intermediate sequence
      */
-    public selectMany<TCollection, TResult>(itemsSelector: (item: T, index: number) => Iterable<TCollection>, resultSelector: (item: T, items: Iterable<TCollection>) => TResult): Linq<TResult>;
+    public selectMany<TCollection, TResult>(itemsSelector: (item: T, index: number) => Iterable<TCollection>, resultSelector: (item: T, subCollection: Iterable<TCollection>) => TResult): Linq<TResult>;
     /**
-     * SelectMany implementation
+     * Projects each element of a sequence to an Iterable<T> and flattens the resulting sequences into one sequence
      * 
-     * @param itemsSelector
-     * @param resultSelector
+     * @param itemsSelector A transform function to apply to each element of the input sequence
+     * @param resultSelector If provided, a transform function to apply to each element of the intermediate sequence
      */
-    public selectMany(itemsSelector: (item: T, index: number) => any, resultSelector?: (item: T, items: any) => any): any {
+    public selectMany(itemsSelector: (item: T, index: number) => any, resultSelector?: (item: T, subCollection: any) => any): any {
         let that = this;
 
         function* selectMany() {
@@ -790,12 +796,12 @@ export class Linq<T> implements Iterable<T> {
                 index = 0;
 
             while (!(iterValue = iter.next()).done) {
-                let items = itemsSelector(iterValue.value, index++);
+                let subCollection = itemsSelector(iterValue.value, index++);
                 if (resultSelector) {
-                    yield resultSelector(iterValue.value, items);
+                    yield resultSelector(iterValue.value, subCollection);
                 }
                 else {
-                    let iterChild: Iterator<T> = items[Symbol.iterator](),
+                    let iterChild: Iterator<T> = subCollection[Symbol.iterator](),
                         iterChildValue: IteratorValue<T>;
 
                     while (!(iterChildValue = iterChild.next()).done) {
@@ -866,15 +872,15 @@ export class Linq<T> implements Iterable<T> {
      */
     public sum(): number|undefined;
     /**
-     * Computes the sum of the sequence of System.Decimal values that are obtained by invoking a transform function on each element of the input sequence
+     * Computes the sum of the sequence of number values that are obtained by invoking a transform function on each element of the input sequence
      * 
      * @param fieldSelector A transform function to apply to each element
      */
     public sum(fieldSelector: (item: T, index: number) => number): number|undefined;
     /**
-     * Sum implementation
+     * Computes the sum of a sequence
      * 
-     * @param fieldSelector
+     * @param fieldSelector If provided, a transform function to apply to each element
      */
     public sum(fieldSelector?: (item: T, index: number) => number): number|undefined {
         fieldSelector = fieldSelector || itemAsNumberSelector;
@@ -989,10 +995,10 @@ export class Linq<T> implements Iterable<T> {
      */
     public toMap<TKey, TValue>(keySelector: (item: T, index: number) => TKey, valueSelector: (item: T, index: number) => TValue): Map<TKey, TValue>;
     /**
-     * ToMap implementation
+     * Creates a Map from a sequence according to a specified key selector function
      * 
-     * @param keySelector
-     * @param valueSelector
+     * @param keySelector A function to extract a key from each element
+     * @param valueSelector If provided, a transform function to produce a result element value from each element
      */
     public toMap(keySelector: (item: T, index: number) => any, valueSelector?: (item: T, index: number) => any): Map<any, any> {
         let iter: Iterator<T> = this.getIter(),
@@ -1027,10 +1033,10 @@ export class Linq<T> implements Iterable<T> {
      */
     public toObject<TKey extends string|number, TValue>(keySelector: (item: T, index: number) => TKey, valueSelector: (item: T, index: number) => TValue) : {[index in TKey]: TValue};
     /**
-     * ToObject implementation
+     * Creates an Object from a sequence according to a specified key selector function
      * 
-     * @param keySelector
-     * @param valueSelector
+     * @param keySelector A function to extract a key from each element
+     * @param valueSelector If provided, a transform function to produce a result element value from each element
      */
     public toObject<TKey extends string|number, TValue>(keySelector: (item: T, index: number) => TKey, valueSelector?: (item: T, index: number) => TValue) : {[index in TKey]: TValue} {
         let iter: Iterator<T> = this.getIter(),
