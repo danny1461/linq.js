@@ -364,7 +364,9 @@ var Linq = /** @class */ (function () {
                         _a.label = 1;
                     case 1:
                         if (!!(iterValue = iter.next()).done) return [3 /*break*/, 4];
-                        distinctValue = fieldSelector ? fieldSelector(iterValue.value, index++) : iterValue.value;
+                        distinctValue = fieldSelector
+                            ? fieldSelector(iterValue.value, index++)
+                            : iterValue.value;
                         if (!(distinct.indexOf(distinctValue) < 0)) return [3 /*break*/, 3];
                         distinct.push(distinctValue);
                         return [4 /*yield*/, iterValue.value];
@@ -895,7 +897,9 @@ var Linq = /** @class */ (function () {
     Linq.prototype.toObject = function (keySelector, valueSelector) {
         var iter = this.getIter(), iterValue, result = {}, index = 0;
         while (!(iterValue = iter.next()).done) {
-            result[keySelector(iterValue.value, index)] = valueSelector ? valueSelector(iterValue.value, index) : iterValue.value;
+            result[keySelector(iterValue.value, index)] = valueSelector
+                ? valueSelector(iterValue.value, index)
+                : iterValue.value;
             index++;
         }
         return result;

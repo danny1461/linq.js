@@ -417,7 +417,10 @@ export class Linq<T> implements Iterable<T> {
                 index = 0;
 
             while (!(iterValue = iter.next()).done) {
-                let distinctValue: any = fieldSelector ? fieldSelector(iterValue.value, index++) : iterValue.value;
+                let distinctValue = fieldSelector
+                    ? fieldSelector(iterValue.value, index++)
+                    : iterValue.value;
+
                 if (distinct.indexOf(distinctValue) < 0) {
                     distinct.push(distinctValue);
                     yield iterValue.value;
@@ -1058,7 +1061,9 @@ export class Linq<T> implements Iterable<T> {
             index = 0;
 
         while (!(iterValue = iter.next()).done) {
-            result[keySelector(iterValue.value, index)] = valueSelector ? valueSelector(iterValue.value, index) : iterValue.value;
+            result[keySelector(iterValue.value, index)] = valueSelector
+                ? valueSelector(iterValue.value, index)
+                : iterValue.value;
             index++;
         }
 
