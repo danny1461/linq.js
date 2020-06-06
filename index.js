@@ -846,22 +846,6 @@ var Linq = /** @class */ (function () {
         return new Linq(takeWhile);
     };
     /**
-     * Performs a subsequent ordering of the elements in a sequence in ascending order according to a key
-     *
-     * @param keySelector A function to extract a key from each element
-     */
-    Linq.prototype.thenBy = function (keySelector) {
-        return this.orderBy(keySelector);
-    };
-    /**
-     * Performs a subsequent ordering of the elements in a sequence in descending order according to a key
-     *
-     * @param keySelector A function to extract a key from each element
-     */
-    Linq.prototype.thenByDescending = function (keySelector) {
-        return this.orderByDescending(keySelector);
-    };
-    /**
      * Creates an array from a the sequence
      */
     Linq.prototype.toArray = function () {
@@ -997,7 +981,7 @@ var LinqOrdered = /** @class */ (function (_super) {
     };
     /* Overrides */
     /**
-     * Sorts the elements of a sequence in ascending order according to a key. WARNING: will overide the previous ordering call
+     * Sorts the elements of a sequence in ascending order according to a key. WARNING: will overide the previous ordering calls
      *
      * @param keySelector A function to extract a key from an element
      */
@@ -1005,7 +989,7 @@ var LinqOrdered = /** @class */ (function (_super) {
         return new LinqOrdered(this, keySelector, true);
     };
     /**
-     * Sorts the elements of a sequence in descending order according to a key. WARNING: will overide the previous ordering call
+     * Sorts the elements of a sequence in descending order according to a key. WARNING: will overide the previous ordering calls
      *
      * @param keySelector A function to extract a key from an element
      */

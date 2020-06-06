@@ -974,22 +974,6 @@ export class Linq<T> implements Iterable<T> {
         return new Linq<T>(takeWhile);
     }
     /**
-     * Performs a subsequent ordering of the elements in a sequence in ascending order according to a key
-     * 
-     * @param keySelector A function to extract a key from each element
-     */
-    public thenBy(keySelector: (item: T) => any): Linq<T> {
-        return this.orderBy(keySelector);
-    }
-    /**
-     * Performs a subsequent ordering of the elements in a sequence in descending order according to a key
-     * 
-     * @param keySelector A function to extract a key from each element
-     */
-    public thenByDescending(keySelector: (item: T) => any): Linq<T> {
-        return this.orderByDescending(keySelector);
-    }
-    /**
      * Creates an array from a the sequence
      */
     public toArray() : T[] {
@@ -1170,7 +1154,7 @@ class LinqOrdered<T> extends Linq<T> {
     /* Overrides */
 
     /**
-     * Sorts the elements of a sequence in ascending order according to a key. WARNING: will overide the previous ordering call
+     * Sorts the elements of a sequence in ascending order according to a key. WARNING: will overide the previous ordering calls
      * 
      * @param keySelector A function to extract a key from an element
      */
@@ -1178,7 +1162,7 @@ class LinqOrdered<T> extends Linq<T> {
         return new LinqOrdered(this, keySelector, true);
     }
     /**
-     * Sorts the elements of a sequence in descending order according to a key. WARNING: will overide the previous ordering call
+     * Sorts the elements of a sequence in descending order according to a key. WARNING: will overide the previous ordering calls
      * 
      * @param keySelector A function to extract a key from an element
      */
