@@ -63,9 +63,11 @@ function itemAsSelfSelector(item: any): any {
  * @param num The number to check the sign of
  */
 let getNumberSign = Math.sign || function(num: number): number {
-    return num != 0
-        ? num / Math.abs(num)
-        : 0;
+    return num === 0
+        ? 0
+        : num > 0
+            ? 1
+            : -1;
 }
 
 /**
