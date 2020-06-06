@@ -4,28 +4,6 @@
  */
 
 /**
- * Represents an iteration step
- */
-export interface IteratorValue<T> {
-    value: T;
-    done?: boolean;
-}
-
-/**
- * Represents an iterator
- */
-export interface Iterator<T> {
-    next: () => IteratorValue<T>
-}
-
-/**
- * Represents an object that implements an iterator
- */
-export interface Iterable<T> {
-    [Symbol.iterator]: () => Iterator<T>;
-}
-
-/**
  * Describes an intermediate grouping value
  */
 export interface IGrouping<TKey, TGroup> {
@@ -89,7 +67,7 @@ export class Linq<T> implements Iterable<T> {
      * 
      * @param generator The generator function to convert
      */
-    public static from<U>(generator: () => Generator<U, void, any>): Linq<U>;
+    public static from<U>(generator: () => Generator<U, void, undefined>): Linq<U>;
     /**
      * Converts to the enumerable properties of an object into a key/value pair Linq object
      * 
@@ -163,7 +141,7 @@ export class Linq<T> implements Iterable<T> {
     /**
      * Returns the iterator for this Linq object
      */
-    public getIter: () => Iterator<T>;
+    public getIter: () => Iterable<T>;
 
     /**
      * Initializes an empty Linq object
@@ -180,7 +158,7 @@ export class Linq<T> implements Iterable<T> {
      * 
      * @param generator The generator function providing the sequence values
      */
-    public constructor(generator: () => Generator<T, void, any>)
+    public constructor(generator: () => Generator<T, void, undefined>)
     /**
      * Initializes a Linq object wrapping the provided data
      * 
@@ -189,14 +167,14 @@ export class Linq<T> implements Iterable<T> {
     public constructor(arg?: any) {
         if (arg) {
             if (typeof arg == 'function') {
-                this.getIter = arg;
+                this.getIter = () => arg();
             }
             else {
-                this.getIter = arg[Symbol.iterator].bind(arg);
+                this.getIter = () => arg;
             }
         }
         else {
-            this.getIter = (<any>function*(){});
+            this.getIter = () => [];
         }
     }
 
@@ -204,7 +182,7 @@ export class Linq<T> implements Iterable<T> {
      * Returns the iterator for this Linq object
      */
     [Symbol.iterator](): Iterator<T> {
-        return this.getIter();
+        return this.getIter()[Symbol.iterator]();
     }
 
     /**
@@ -236,12 +214,10 @@ export class Linq<T> implements Iterable<T> {
      * @param resultSelector If provided, a function to transform the final accumulator value into the result value
      */
     public aggregate(func: Function, seed?: any, resultSelector?: Function): any {
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
-            accumulate = seed;
-        
-        while (!(iterValue = iter.next()).done) {
-            accumulate = func(iterValue.value, accumulate);
+        let accumulate = seed;
+
+        for (let val of this.getIter()) {
+            accumulate = func(val, accumulate);
         }
 
         if (resultSelector) {
@@ -256,12 +232,10 @@ export class Linq<T> implements Iterable<T> {
      * @param predicate A function to test each element for a condition
      */
     public all(predicate: (item: T, index: number) => boolean): boolean {
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
-            index = 0;
+        let index = 0;
 
-        while (!(iterValue = iter.next()).done) {
-            if (!predicate(iterValue.value, index++)) {
+        for (let val of this.getIter()) {
+            if (!predicate(val, index++)) {
                 return false;
             }
         }
@@ -274,15 +248,13 @@ export class Linq<T> implements Iterable<T> {
      * @param predicate A function to test each element for a condition
      */
     public any(predicate?: (item: T, index: number) => boolean): boolean {
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
-            index = 0;
+        let index = 0;
 
-        while (!(iterValue = iter.next()).done) {
-            if (predicate && !predicate(iterValue.value, index++)) {
+        for (let val of this.getIter()) {
+            if (predicate && !predicate(val, index++)) {
                 continue;
             }
-
+    
             return true;
         }
 
@@ -297,11 +269,8 @@ export class Linq<T> implements Iterable<T> {
         let that = this;
 
         function* append() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>;
-
-            while (!(iterValue = iter.next()).done) {
-                yield iterValue.value;
+            for (let val of that.getIter()) {
+                yield val;
             }
 
             for (let i = 0; i < items.length; i++) {
@@ -329,16 +298,15 @@ export class Linq<T> implements Iterable<T> {
     public average(fieldSelector?: (item: T, index: number) => number): number|undefined {
         fieldSelector = fieldSelector || itemAsNumberSelector;
 
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+        let iter = this.getIter(),
             index = 0;
 
-        while (!(iterValue = iter.next()).done) {
-            let sum = fieldSelector(iterValue.value, index++),
+        for (let val of iter) {
+            let sum = fieldSelector(val, index++),
                 count = 1;
 
-            while (!(iterValue = iter.next()).done) {
-                sum += fieldSelector(iterValue.value, index++);
+            for (val of iter) {
+                sum += fieldSelector(val, index++);
                 count++;
             }
 
@@ -356,16 +324,13 @@ export class Linq<T> implements Iterable<T> {
         let that = this;
 
         function* concatenated() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>;
-            while (!(iterValue = iter.next()).done) {
-                yield iterValue.value;
+            for (let val of that.getIter()) {
+                yield val;
             }
 
             for (let i = 0; i < items.length; i++) {
-                iter = items[i][Symbol.iterator]();
-                while (!(iterValue = iter.next()).done) {
-                    yield iterValue.value;
+                for (let val of items[i]) {
+                    yield val;
                 }
             }
         }
@@ -378,11 +343,8 @@ export class Linq<T> implements Iterable<T> {
      * @param value The value to locate in the sequence
      */
     public contains(value: T): boolean {
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>;
-
-        while (!(iterValue = iter.next()).done) {
-            if (iterValue.value === value) {
+        for (let val of this.getIter()) {
+            if (val === value) {
                 return true;
             }
         }
@@ -405,16 +367,14 @@ export class Linq<T> implements Iterable<T> {
      * @param predicate If provided, a function to test each element for a condition
      */
     public count(predicate?: (item: T, index: number) => boolean) {
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
-            count = 0,
+        let count = 0,
             index = 0;
 
-        while (!(iterValue = iter.next()).done) {
-            if (predicate && !predicate(iterValue.value, index++)) {
+        for (let val of this.getIter()) {
+            if (predicate && !predicate(val, index++)) {
                 continue;
             }
-
+    
             count++;
         }
 
@@ -440,18 +400,16 @@ export class Linq<T> implements Iterable<T> {
 
         function* distinct() {
             let distinct: any[] = [],
-                iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>,
                 index = 0;
 
-            while (!(iterValue = iter.next()).done) {
+            for (let val of that.getIter()) {
                 let distinctValue = fieldSelector
-                    ? fieldSelector(iterValue.value, index++)
-                    : iterValue.value;
-
+                    ? fieldSelector(val, index++)
+                    : val;
+    
                 if (distinct.indexOf(distinctValue) < 0) {
                     distinct.push(distinctValue);
-                    yield iterValue.value;
+                    yield val;
                 }
             }
         }
@@ -464,15 +422,13 @@ export class Linq<T> implements Iterable<T> {
      * @param index The zero-based index of the element to retrieve
      */
     public elementAt(index: number): T|undefined {
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
-            i = 0;
+        let i = 0;
 
-        while (!(iterValue = iter.next()).done) {
+        for (let val of this.getIter()) {
             if (i == index) {
-                return iterValue.value;
+                return val;
             }
-
+    
             i++;
         }
 
@@ -492,16 +448,14 @@ export class Linq<T> implements Iterable<T> {
      */
     public first(predicate: (item: T, index: number) => boolean): T|undefined;
     public first(predicate?: (item: T, index: number) => boolean): T|undefined {
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
-            index = 0;
+        let index = 0;
 
-        while (!(iterValue = iter.next()).done) {
-            if (predicate && !predicate(iterValue.value, index++)) {
+        for (let val of this.getIter()) {
+            if (predicate && !predicate(val, index++)) {
                 continue;
             }
-
-            return iterValue.value;
+    
+            return val;
         }
 
         return undefined;
@@ -525,17 +479,15 @@ export class Linq<T> implements Iterable<T> {
      * @param keySelector A function to extract the key for each element
      * @param resultSelector If provided, a function to create a result value from each group
      */
-    public groupBy(keySelector: Function, resultSelector?: Function) {
+    public groupBy<TKey>(keySelector: (item: T, index: number) => TKey, resultSelector?: Function): any {
         let that = this;
 
         function* groupBy() {
-            let iter: Iterator<any> = that.getIter(),
-                iterValue: IteratorValue<any>,
-                groups = [],
+            let groups = [],
                 index = 0;
 
-            while (!(iterValue = iter.next()).done) {
-                let key = keySelector(iterValue.value, index++),
+            for (let val of that.getIter()) {
+                let key = keySelector(val, index++),
                     ndx = groups.findIndex(i => i.key == key);
                 
                 if (ndx < 0) {
@@ -545,8 +497,8 @@ export class Linq<T> implements Iterable<T> {
                         group: []
                     });
                 }
-
-                (<any>groups[ndx].group).push(iterValue.value);
+    
+                (<any>groups[ndx].group).push(val);
             }
 
             if (resultSelector) {
@@ -555,9 +507,8 @@ export class Linq<T> implements Iterable<T> {
                 });
             }
 
-            iter = groups[Symbol.iterator]();
-            while (!(iterValue = iter.next()).done) {
-                yield iterValue.value;
+            for (let group of groups) {
+                yield group;
             }
         }
         
@@ -594,17 +545,15 @@ export class Linq<T> implements Iterable<T> {
     public joinString(separator: string, fieldSelector?: (item: T, index: number) => any): string {
         fieldSelector = fieldSelector || itemAsSelfSelector;
 
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
-            result = '',
+        let result = '',
             index = 0;
 
-        while (!(iterValue = iter.next()).done) {
+        for (let val of this.getIter()) {
             if (index > 0) {
                 result += separator;
             }
-
-            result += fieldSelector(iterValue.value, index++);
+    
+            result += fieldSelector(val, index++);
         }
 
         return result;
@@ -625,17 +574,15 @@ export class Linq<T> implements Iterable<T> {
      * @param predicate If provided, a function to test each element for a condition
      */
     public last(predicate?: (item: T, index: number) => boolean): T|undefined {
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
-            last: T|undefined = undefined,
+        let last: T|undefined = undefined,
             index = 0;
 
-        while (!(iterValue = iter.next()).done) {
-            if (predicate && !predicate(iterValue.value, index++)) {
+        for (let val of this.getIter()) {
+            if (predicate && !predicate(val, index++)) {
                 continue;
             }
-
-            last = iterValue.value;
+    
+            last = val;
         }
 
         return last;
@@ -658,19 +605,18 @@ export class Linq<T> implements Iterable<T> {
     public max(fieldSelector?: (item: T, index: number) => number): T|undefined {
         fieldSelector = fieldSelector || itemAsNumberSelector;
 
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+        let iter = this.getIter(),
             max: T|undefined = undefined,
             index = 0;
 
-        while (!(iterValue = iter.next()).done) {
-            max = iterValue.value;
-            let maxVal = fieldSelector(iterValue.value, index++);
+        for (let val of iter) {
+            max = val;
+            let maxVal = fieldSelector(val, index++);
 
-            while (!(iterValue = iter.next()).done) {
-                let val = fieldSelector(iterValue.value, index++);
+            for (let item of iter) {
+                let val = fieldSelector(item, index++);
                 if (val > maxVal) {
-                    max = iterValue.value;
+                    max = item;
                     maxVal = val;
                 }
             }
@@ -696,19 +642,18 @@ export class Linq<T> implements Iterable<T> {
     public min(fieldSelector?: (item: T, index: number) => number): T|undefined {
         fieldSelector = fieldSelector || itemAsNumberSelector;
 
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+        let iter = this.getIter(),
             min: T|undefined = undefined,
             index = 0;
 
-        while (!(iterValue = iter.next()).done) {
-            min = iterValue.value;
-            let minVal = fieldSelector(iterValue.value, index++);
+        for (let val of iter) {
+            min = val;
+            let minVal = fieldSelector(val, index++);
 
-            while (!(iterValue = iter.next()).done) {
-                let val = fieldSelector(iterValue.value, index++);
+            for (let item of iter) {
+                let val = fieldSelector(item, index++);
                 if (val < minVal) {
-                    min = iterValue.value;
+                    min = item;
                     minVal = val;
                 }
             }
@@ -745,11 +690,8 @@ export class Linq<T> implements Iterable<T> {
                 yield items[i];
             }
 
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>;
-
-            while (!(iterValue = iter.next()).done) {
-                yield iterValue.value;
+            for (let val of that.getIter()) {
+                yield val;
             }
         }
 
@@ -759,16 +701,15 @@ export class Linq<T> implements Iterable<T> {
      * Inverts the order of the elements in a sequence
      */
     public reverse(): Linq<T> {
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
-            reversed: T[] = [];
+        let that = this;
 
-        while (!(iterValue = iter.next()).done) {
-            reversed.push(iterValue.value);
+        function* reverse() {
+            for (let val of that.toArray().reverse()) {
+                yield val;
+            }
         }
 
-        reversed.reverse();
-        return new Linq<T>(reversed);
+        return new Linq<T>(reverse);
     }
     /**
      * Projects each element of a sequence into a new form
@@ -779,12 +720,10 @@ export class Linq<T> implements Iterable<T> {
         let that = this;
 
         function* select() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>,
-                index = 0;
+            let index = 0;
 
-            while (!(iterValue = iter.next()).done) {
-                yield selector(iterValue.value, index++);
+            for (let val of that.getIter()) {
+                yield selector(val, index++);
             }
         }
 
@@ -813,21 +752,17 @@ export class Linq<T> implements Iterable<T> {
         let that = this;
 
         function* selectMany() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>,
-                index = 0;
+            let index = 0;
 
-            while (!(iterValue = iter.next()).done) {
-                let subCollection = itemsSelector(iterValue.value, index++);
+            for (let val of that.getIter()) {
+                let subCollection = itemsSelector(val, index++);
+
                 if (resultSelector) {
-                    yield resultSelector(iterValue.value, subCollection);
+                    yield resultSelector(val, subCollection);
                 }
                 else {
-                    let iterChild: Iterator<T> = subCollection[Symbol.iterator](),
-                        iterChildValue: IteratorValue<T>;
-
-                    while (!(iterChildValue = iterChild.next()).done) {
-                        yield iterChildValue.value;
+                    for (let val of subCollection) {
+                        yield val;
                     }
                 }
             }
@@ -844,15 +779,12 @@ export class Linq<T> implements Iterable<T> {
         let that = this;
 
         function* skip() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>;
-
-            while (!(iterValue = iter.next()).done) {
+            for (let val of that.getIter()) {
                 if (count > 0) {
                     count--;
                 }
                 else {
-                    yield iterValue.value;
+                    yield val;
                 }
             }
         }
@@ -868,22 +800,20 @@ export class Linq<T> implements Iterable<T> {
         let that = this;
 
         function* skipWhile() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>,
-                skipping = true,
+            let skipping = true,
                 index = 0;
 
-            while (!(iterValue = iter.next()).done) {
+            for (let val of that.getIter()) {
                 if (skipping) {
-                    if (predicate(iterValue.value, index++)) {
+                    if (predicate(val, index++)) {
                         continue;
                     }
                     else {
                         skipping = false;
                     }
                 }
-
-                yield iterValue.value;
+    
+                yield val;
             }
         }
 
@@ -907,15 +837,14 @@ export class Linq<T> implements Iterable<T> {
     public sum(fieldSelector?: (item: T, index: number) => number): number|undefined {
         fieldSelector = fieldSelector || itemAsNumberSelector;
 
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+        let iter = this.getIter(),
             index = 0;
 
-        while (!(iterValue = iter.next()).done) {
-            let sum = fieldSelector(iterValue.value, index++);
+        for (let val of iter) {
+            let sum = fieldSelector(val, index++);
 
-            while (!(iterValue = iter.next()).done) {
-                sum += fieldSelector(iterValue.value, index++);
+            for (val of this.getIter()) {
+                sum += fieldSelector(val, index++);
             }
 
             return sum;
@@ -932,12 +861,9 @@ export class Linq<T> implements Iterable<T> {
         let that = this;
 
         function* take() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>;
-
-            while (!(iterValue = iter.next()).done) {
+            for (let val of that.getIter()) {
                 if (count > 0) {
-                    yield iterValue.value;
+                    yield val;
                     count--;
                 }
             }
@@ -954,15 +880,13 @@ export class Linq<T> implements Iterable<T> {
         let that = this;
 
         function* takeWhile() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>,
-                taking = true,
+            let taking = true,
                 index = 0;
 
-            while (!(iterValue = iter.next()).done) {
+            for (let val of that.getIter()) {
                 if (taking) {
-                    if (predicate(iterValue.value, index++)) {
-                        yield iterValue.value;
+                    if (predicate(val, index++)) {
+                        yield val;
                     }
                     else {
                         taking = false;
@@ -993,12 +917,10 @@ export class Linq<T> implements Iterable<T> {
      * Creates an array from a the sequence
      */
     public toArray() : T[] {
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
-            result: T[] = [];
+        let result: T[] = [];
 
-        while (!(iterValue = iter.next()).done) {
-            result.push(iterValue.value);
+        for (let val of this.getIter()) {
+            result.push(val);
         }
 
         return result;
@@ -1023,19 +945,17 @@ export class Linq<T> implements Iterable<T> {
      * @param valueSelector If provided, a transform function to produce a result element value from each element
      */
     public toMap(keySelector: (item: T, index: number) => any, valueSelector?: (item: T, index: number) => any): Map<any, any> {
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
-            result = new Map<any, any>(),
+        let result = new Map<any, any>(),
             index = 0;
 
-        while (!(iterValue = iter.next()).done) {
+        for (let val of this.getIter()) {
             result.set(
-                keySelector(iterValue.value, index),
+                keySelector(val, index),
                 valueSelector
-                    ? valueSelector(iterValue.value, index)
-                    : iterValue.value
+                    ? valueSelector(val, index)
+                    : val
             );
-
+    
             index++;
         }
 
@@ -1061,15 +981,14 @@ export class Linq<T> implements Iterable<T> {
      * @param valueSelector If provided, a transform function to produce a result element value from each element
      */
     public toObject<TKey extends string|number, TValue>(keySelector: (item: T, index: number) => TKey, valueSelector?: (item: T, index: number) => TValue) : {[index in TKey]: TValue} {
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
-            result: any = {},
+        let result: any = {},
             index = 0;
 
-        while (!(iterValue = iter.next()).done) {
-            result[keySelector(iterValue.value, index)] = valueSelector
-                ? valueSelector(iterValue.value, index)
-                : iterValue.value;
+        for (let val of this.getIter()) {
+            result[keySelector(val, index)] = valueSelector
+                ? valueSelector(val, index)
+                : val;
+
             index++;
         }
 
@@ -1079,12 +998,10 @@ export class Linq<T> implements Iterable<T> {
      * Creates a Set from the sequence
      */
     public toSet(): Set<T> {
-        let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
-            result = new Set<T>();
+        let result = new Set<T>();
 
-        while (!(iterValue = iter.next()).done) {
-            result.add(iterValue.value);
+        for (let val of this.getIter()) {
+            result.add(val);
         }
 
         return result;
@@ -1101,13 +1018,11 @@ export class Linq<T> implements Iterable<T> {
         let that = this;
 
         function* where() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>,
-                index = 0;
+            let index = 0;
 
-            while (!(iterValue = iter.next()).done) {
-                if (predicate(iterValue.value, index++)) {
-                    yield iterValue.value;
+            for (let val of that.getIter()) {
+                if (predicate(val, index++)) {
+                    yield val;
                 }
             }
         }
@@ -1116,18 +1031,18 @@ export class Linq<T> implements Iterable<T> {
     }
 }
 
-export class LinqOrdered<T> extends Linq<T> {
+class LinqOrdered<T> extends Linq<T> {
     /* Instance Members */
 
-    private dataIterator: () => Iterator<T>;
+    private underlyingLinq: Linq<T>;
     private ordering: OrderingRecord<T>[] = [];
 
-    public constructor(iter: Iterable<T>, keySelector: (item: T) => any, ascending: boolean);
-    public constructor(iter: Iterable<T>, keySelector: (item: T) => any, ascending: boolean, ordering: OrderingRecord<T>[]);
-    public constructor(iter: Iterable<T>, keySelector: (item: T) => any, ascending: boolean, ordering?: OrderingRecord<T>[]) {
+    public constructor(iter: Linq<T>, keySelector: (item: T) => any, ascending: boolean);
+    public constructor(iter: Linq<T>, keySelector: (item: T) => any, ascending: boolean, ordering: OrderingRecord<T>[]);
+    public constructor(iter: Linq<T>, keySelector: (item: T) => any, ascending: boolean, ordering?: OrderingRecord<T>[]) {
         super();
 
-        this.dataIterator = iter[Symbol.iterator].bind(iter);
+        this.underlyingLinq = iter;
         if (ordering) {
             this.ordering = ordering;
         }
@@ -1136,19 +1051,12 @@ export class LinqOrdered<T> extends Linq<T> {
             keySelector,
             order: ascending ? 1 : -1
         });
-        this.getIter = (<any>this.orderingFunc);
+        this.getIter = () => this.orderingFunc();
     }
 
     private *orderingFunc(): Generator<T, void, any> {
-        let iter: Iterator<T> = this.dataIterator(),
-            iterValue: IteratorValue<T>,
-            sortedValues: T[] = [];
-        
-        while (!(iterValue = iter.next()).done) {
-            sortedValues.push(iterValue.value);
-        }
+        let sortedValues = this.underlyingLinq.toArray();
 
-        // Sorting processes
         sortedValues.sort((a: T, b: T) => {
             for (let i = 0; i < this.ordering.length; i++) {
                 let fieldA = this.ordering[i].keySelector(a),
@@ -1165,10 +1073,8 @@ export class LinqOrdered<T> extends Linq<T> {
             return 0;
         });
 
-        // Output values
-        iter = sortedValues[Symbol.iterator]();
-        while (!(iterValue = iter.next()).done) {
-            yield iterValue.value;
+        for (let val of sortedValues) {
+            yield val;
         }
     }
 
@@ -1180,7 +1086,7 @@ export class LinqOrdered<T> extends Linq<T> {
      * @param keySelector A function to extract a key from an element
      */
     public orderBy(keySelector: (item: T) => any): LinqOrdered<T> {
-        return new LinqOrdered(this, keySelector, true);
+        return new LinqOrdered<T>(this.underlyingLinq, keySelector, true);
     }
     /**
      * Sorts the elements of a sequence in descending order according to a key. WARNING: will overide the previous ordering call
@@ -1188,7 +1094,7 @@ export class LinqOrdered<T> extends Linq<T> {
      * @param keySelector A function to extract a key from an element
      */
     public orderByDescending(keySelector: (item: T) => any): LinqOrdered<T> {
-        return new LinqOrdered(this, keySelector, false);
+        return new LinqOrdered<T>(this.underlyingLinq, keySelector, false);
     }
     /**
      * Performs a subsequent ordering of the elements in a sequence in ascending order according to a key
@@ -1196,7 +1102,7 @@ export class LinqOrdered<T> extends Linq<T> {
      * @param keySelector A function to extract a key from each element
      */
     public thenBy(keySelector: (item: T) => any): Linq<T> {
-        return new LinqOrdered(this, keySelector, true, this.ordering.slice(0));
+        return new LinqOrdered<T>(this.underlyingLinq, keySelector, true, this.ordering.slice(0));
     }
     /**
      * Performs a subsequent ordering of the elements in a sequence in descending order according to a key
@@ -1204,6 +1110,6 @@ export class LinqOrdered<T> extends Linq<T> {
      * @param keySelector A function to extract a key from each element
      */
     public thenByDescending(keySelector: (item: T) => any): Linq<T> {
-        return new LinqOrdered(this, keySelector, false, this.ordering.slice(0));
+        return new LinqOrdered<T>(this.underlyingLinq, keySelector, false, this.ordering.slice(0));
     }
 }

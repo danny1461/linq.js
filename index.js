@@ -43,8 +43,19 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __values = (this && this.__values) || function(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LinqOrdered = exports.Linq = void 0;
+exports.Linq = void 0;
 function itemAsNumberSelector(item) {
     return parseFloat(item);
 }
@@ -77,16 +88,14 @@ var Linq = /** @class */ (function () {
     function Linq(arg) {
         if (arg) {
             if (typeof arg == 'function') {
-                this.getIter = arg;
+                this.getIter = function () { return arg(); };
             }
             else {
-                this.getIter = arg[Symbol.iterator].bind(arg);
+                this.getIter = function () { return arg; };
             }
         }
         else {
-            this.getIter = function () { return __generator(this, function (_a) {
-                return [2 /*return*/];
-            }); };
+            this.getIter = function () { return []; };
         }
     }
     /**
@@ -192,7 +201,7 @@ var Linq = /** @class */ (function () {
      * Returns the iterator for this Linq object
      */
     Linq.prototype[Symbol.iterator] = function () {
-        return this.getIter();
+        return this.getIter()[Symbol.iterator]();
     };
     /**
      * Applies an accumulator function over a sequence
@@ -202,9 +211,20 @@ var Linq = /** @class */ (function () {
      * @param resultSelector If provided, a function to transform the final accumulator value into the result value
      */
     Linq.prototype.aggregate = function (func, seed, resultSelector) {
-        var iter = this.getIter(), iterValue, accumulate = seed;
-        while (!(iterValue = iter.next()).done) {
-            accumulate = func(iterValue.value, accumulate);
+        var e_1, _a;
+        var accumulate = seed;
+        try {
+            for (var _b = __values(this.getIter()), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var val = _c.value;
+                accumulate = func(val, accumulate);
+            }
+        }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_1) throw e_1.error; }
         }
         if (resultSelector) {
             return resultSelector(accumulate);
@@ -217,11 +237,22 @@ var Linq = /** @class */ (function () {
      * @param predicate A function to test each element for a condition
      */
     Linq.prototype.all = function (predicate) {
-        var iter = this.getIter(), iterValue, index = 0;
-        while (!(iterValue = iter.next()).done) {
-            if (!predicate(iterValue.value, index++)) {
-                return false;
+        var e_2, _a;
+        var index = 0;
+        try {
+            for (var _b = __values(this.getIter()), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var val = _c.value;
+                if (!predicate(val, index++)) {
+                    return false;
+                }
             }
+        }
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_2) throw e_2.error; }
         }
         return true;
     };
@@ -231,12 +262,23 @@ var Linq = /** @class */ (function () {
      * @param predicate A function to test each element for a condition
      */
     Linq.prototype.any = function (predicate) {
-        var iter = this.getIter(), iterValue, index = 0;
-        while (!(iterValue = iter.next()).done) {
-            if (predicate && !predicate(iterValue.value, index++)) {
-                continue;
+        var e_3, _a;
+        var index = 0;
+        try {
+            for (var _b = __values(this.getIter()), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var val = _c.value;
+                if (predicate && !predicate(val, index++)) {
+                    continue;
+                }
+                return true;
             }
-            return true;
+        }
+        catch (e_3_1) { e_3 = { error: e_3_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_3) throw e_3.error; }
         }
         return false;
     };
@@ -252,31 +294,48 @@ var Linq = /** @class */ (function () {
         }
         var that = this;
         function append() {
-            var iter, iterValue, i;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var _a, _b, val, e_4_1, i;
+            var e_4, _c;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
                     case 0:
-                        iter = that.getIter();
-                        _a.label = 1;
+                        _d.trys.push([0, 5, 6, 7]);
+                        _a = __values(that.getIter()), _b = _a.next();
+                        _d.label = 1;
                     case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 3];
-                        return [4 /*yield*/, iterValue.value];
+                        if (!!_b.done) return [3 /*break*/, 4];
+                        val = _b.value;
+                        return [4 /*yield*/, val];
                     case 2:
-                        _a.sent();
-                        return [3 /*break*/, 1];
+                        _d.sent();
+                        _d.label = 3;
                     case 3:
-                        i = 0;
-                        _a.label = 4;
-                    case 4:
-                        if (!(i < items.length)) return [3 /*break*/, 7];
-                        return [4 /*yield*/, items[i]];
+                        _b = _a.next();
+                        return [3 /*break*/, 1];
+                    case 4: return [3 /*break*/, 7];
                     case 5:
-                        _a.sent();
-                        _a.label = 6;
+                        e_4_1 = _d.sent();
+                        e_4 = { error: e_4_1 };
+                        return [3 /*break*/, 7];
                     case 6:
+                        try {
+                            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                        }
+                        finally { if (e_4) throw e_4.error; }
+                        return [7 /*endfinally*/];
+                    case 7:
+                        i = 0;
+                        _d.label = 8;
+                    case 8:
+                        if (!(i < items.length)) return [3 /*break*/, 11];
+                        return [4 /*yield*/, items[i]];
+                    case 9:
+                        _d.sent();
+                        _d.label = 10;
+                    case 10:
                         i++;
-                        return [3 /*break*/, 4];
-                    case 7: return [2 /*return*/];
+                        return [3 /*break*/, 8];
+                    case 11: return [2 /*return*/];
                 }
             });
         }
@@ -288,15 +347,36 @@ var Linq = /** @class */ (function () {
      * @param fieldSelector If provided, a transform function to apply to each element
      */
     Linq.prototype.average = function (fieldSelector) {
+        var e_5, _a, e_6, _b;
         fieldSelector = fieldSelector || itemAsNumberSelector;
-        var iter = this.getIter(), iterValue, index = 0;
-        while (!(iterValue = iter.next()).done) {
-            var sum = fieldSelector(iterValue.value, index++), count = 1;
-            while (!(iterValue = iter.next()).done) {
-                sum += fieldSelector(iterValue.value, index++);
-                count++;
+        var iter = this.getIter(), index = 0;
+        try {
+            for (var iter_1 = __values(iter), iter_1_1 = iter_1.next(); !iter_1_1.done; iter_1_1 = iter_1.next()) {
+                var val = iter_1_1.value;
+                var sum = fieldSelector(val, index++), count = 1;
+                try {
+                    for (var iter_2 = (e_6 = void 0, __values(iter)), iter_2_1 = iter_2.next(); !iter_2_1.done; iter_2_1 = iter_2.next()) {
+                        val = iter_2_1.value;
+                        sum += fieldSelector(val, index++);
+                        count++;
+                    }
+                }
+                catch (e_6_1) { e_6 = { error: e_6_1 }; }
+                finally {
+                    try {
+                        if (iter_2_1 && !iter_2_1.done && (_b = iter_2.return)) _b.call(iter_2);
+                    }
+                    finally { if (e_6) throw e_6.error; }
+                }
+                return sum / count;
             }
-            return sum / count;
+        }
+        catch (e_5_1) { e_5 = { error: e_5_1 }; }
+        finally {
+            try {
+                if (iter_1_1 && !iter_1_1.done && (_a = iter_1.return)) _a.call(iter_1);
+            }
+            finally { if (e_5) throw e_5.error; }
         }
         return undefined;
     };
@@ -312,35 +392,70 @@ var Linq = /** @class */ (function () {
         }
         var that = this;
         function concatenated() {
-            var iter, iterValue, i;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var _a, _b, val, e_7_1, i, _c, _d, val, e_8_1;
+            var e_7, _e, e_8, _f;
+            return __generator(this, function (_g) {
+                switch (_g.label) {
                     case 0:
-                        iter = that.getIter();
-                        _a.label = 1;
+                        _g.trys.push([0, 5, 6, 7]);
+                        _a = __values(that.getIter()), _b = _a.next();
+                        _g.label = 1;
                     case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 3];
-                        return [4 /*yield*/, iterValue.value];
+                        if (!!_b.done) return [3 /*break*/, 4];
+                        val = _b.value;
+                        return [4 /*yield*/, val];
                     case 2:
-                        _a.sent();
-                        return [3 /*break*/, 1];
+                        _g.sent();
+                        _g.label = 3;
                     case 3:
-                        i = 0;
-                        _a.label = 4;
-                    case 4:
-                        if (!(i < items.length)) return [3 /*break*/, 8];
-                        iter = items[i][Symbol.iterator]();
-                        _a.label = 5;
+                        _b = _a.next();
+                        return [3 /*break*/, 1];
+                    case 4: return [3 /*break*/, 7];
                     case 5:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 7];
-                        return [4 /*yield*/, iterValue.value];
+                        e_7_1 = _g.sent();
+                        e_7 = { error: e_7_1 };
+                        return [3 /*break*/, 7];
                     case 6:
-                        _a.sent();
-                        return [3 /*break*/, 5];
+                        try {
+                            if (_b && !_b.done && (_e = _a.return)) _e.call(_a);
+                        }
+                        finally { if (e_7) throw e_7.error; }
+                        return [7 /*endfinally*/];
                     case 7:
+                        i = 0;
+                        _g.label = 8;
+                    case 8:
+                        if (!(i < items.length)) return [3 /*break*/, 17];
+                        _g.label = 9;
+                    case 9:
+                        _g.trys.push([9, 14, 15, 16]);
+                        _c = (e_8 = void 0, __values(items[i])), _d = _c.next();
+                        _g.label = 10;
+                    case 10:
+                        if (!!_d.done) return [3 /*break*/, 13];
+                        val = _d.value;
+                        return [4 /*yield*/, val];
+                    case 11:
+                        _g.sent();
+                        _g.label = 12;
+                    case 12:
+                        _d = _c.next();
+                        return [3 /*break*/, 10];
+                    case 13: return [3 /*break*/, 16];
+                    case 14:
+                        e_8_1 = _g.sent();
+                        e_8 = { error: e_8_1 };
+                        return [3 /*break*/, 16];
+                    case 15:
+                        try {
+                            if (_d && !_d.done && (_f = _c.return)) _f.call(_c);
+                        }
+                        finally { if (e_8) throw e_8.error; }
+                        return [7 /*endfinally*/];
+                    case 16:
                         i++;
-                        return [3 /*break*/, 4];
-                    case 8: return [2 /*return*/];
+                        return [3 /*break*/, 8];
+                    case 17: return [2 /*return*/];
                 }
             });
         }
@@ -352,11 +467,21 @@ var Linq = /** @class */ (function () {
      * @param value The value to locate in the sequence
      */
     Linq.prototype.contains = function (value) {
-        var iter = this.getIter(), iterValue;
-        while (!(iterValue = iter.next()).done) {
-            if (iterValue.value === value) {
-                return true;
+        var e_9, _a;
+        try {
+            for (var _b = __values(this.getIter()), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var val = _c.value;
+                if (val === value) {
+                    return true;
+                }
             }
+        }
+        catch (e_9_1) { e_9 = { error: e_9_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_9) throw e_9.error; }
         }
         return false;
     };
@@ -366,12 +491,23 @@ var Linq = /** @class */ (function () {
      * @param predicate If provided, a function to test each element for a condition
      */
     Linq.prototype.count = function (predicate) {
-        var iter = this.getIter(), iterValue, count = 0, index = 0;
-        while (!(iterValue = iter.next()).done) {
-            if (predicate && !predicate(iterValue.value, index++)) {
-                continue;
+        var e_10, _a;
+        var count = 0, index = 0;
+        try {
+            for (var _b = __values(this.getIter()), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var val = _c.value;
+                if (predicate && !predicate(val, index++)) {
+                    continue;
+                }
+                count++;
             }
-            count++;
+        }
+        catch (e_10_1) { e_10 = { error: e_10_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_10) throw e_10.error; }
         }
         return count;
     };
@@ -383,25 +519,44 @@ var Linq = /** @class */ (function () {
     Linq.prototype.distinct = function (fieldSelector) {
         var that = this;
         function distinct() {
-            var distinct, iter, iterValue, index, distinctValue;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var distinct, index, _a, _b, val, distinctValue, e_11_1;
+            var e_11, _c;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
                     case 0:
-                        distinct = [], iter = that.getIter(), index = 0;
-                        _a.label = 1;
+                        distinct = [], index = 0;
+                        _d.label = 1;
                     case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 4];
-                        distinctValue = fieldSelector
-                            ? fieldSelector(iterValue.value, index++)
-                            : iterValue.value;
-                        if (!(distinct.indexOf(distinctValue) < 0)) return [3 /*break*/, 3];
-                        distinct.push(distinctValue);
-                        return [4 /*yield*/, iterValue.value];
+                        _d.trys.push([1, 6, 7, 8]);
+                        _a = __values(that.getIter()), _b = _a.next();
+                        _d.label = 2;
                     case 2:
-                        _a.sent();
-                        _a.label = 3;
-                    case 3: return [3 /*break*/, 1];
-                    case 4: return [2 /*return*/];
+                        if (!!_b.done) return [3 /*break*/, 5];
+                        val = _b.value;
+                        distinctValue = fieldSelector
+                            ? fieldSelector(val, index++)
+                            : val;
+                        if (!(distinct.indexOf(distinctValue) < 0)) return [3 /*break*/, 4];
+                        distinct.push(distinctValue);
+                        return [4 /*yield*/, val];
+                    case 3:
+                        _d.sent();
+                        _d.label = 4;
+                    case 4:
+                        _b = _a.next();
+                        return [3 /*break*/, 2];
+                    case 5: return [3 /*break*/, 8];
+                    case 6:
+                        e_11_1 = _d.sent();
+                        e_11 = { error: e_11_1 };
+                        return [3 /*break*/, 8];
+                    case 7:
+                        try {
+                            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                        }
+                        finally { if (e_11) throw e_11.error; }
+                        return [7 /*endfinally*/];
+                    case 8: return [2 /*return*/];
                 }
             });
         }
@@ -413,12 +568,23 @@ var Linq = /** @class */ (function () {
      * @param index The zero-based index of the element to retrieve
      */
     Linq.prototype.elementAt = function (index) {
-        var iter = this.getIter(), iterValue, i = 0;
-        while (!(iterValue = iter.next()).done) {
-            if (i == index) {
-                return iterValue.value;
+        var e_12, _a;
+        var i = 0;
+        try {
+            for (var _b = __values(this.getIter()), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var val = _c.value;
+                if (i == index) {
+                    return val;
+                }
+                i++;
             }
-            i++;
+        }
+        catch (e_12_1) { e_12 = { error: e_12_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_12) throw e_12.error; }
         }
         return undefined;
     };
@@ -430,12 +596,23 @@ var Linq = /** @class */ (function () {
         throw 'Not Implemented';
     };
     Linq.prototype.first = function (predicate) {
-        var iter = this.getIter(), iterValue, index = 0;
-        while (!(iterValue = iter.next()).done) {
-            if (predicate && !predicate(iterValue.value, index++)) {
-                continue;
+        var e_13, _a;
+        var index = 0;
+        try {
+            for (var _b = __values(this.getIter()), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var val = _c.value;
+                if (predicate && !predicate(val, index++)) {
+                    continue;
+                }
+                return val;
             }
-            return iterValue.value;
+        }
+        catch (e_13_1) { e_13 = { error: e_13_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_13) throw e_13.error; }
         }
         return undefined;
     };
@@ -448,13 +625,14 @@ var Linq = /** @class */ (function () {
     Linq.prototype.groupBy = function (keySelector, resultSelector) {
         var that = this;
         function groupBy() {
-            var iter, iterValue, groups, index, _loop_1;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var groups, index, _loop_1, _a, _b, val, groups_1, groups_1_1, group, e_14_1;
+            var e_15, _c, e_14, _d;
+            return __generator(this, function (_e) {
+                switch (_e.label) {
                     case 0:
-                        iter = that.getIter(), groups = [], index = 0;
-                        _loop_1 = function () {
-                            var key = keySelector(iterValue.value, index++), ndx = groups.findIndex(function (i) { return i.key == key; });
+                        groups = [], index = 0;
+                        _loop_1 = function (val) {
+                            var key = keySelector(val, index++), ndx = groups.findIndex(function (i) { return i.key == key; });
                             if (ndx < 0) {
                                 ndx = groups.length;
                                 groups.push({
@@ -462,25 +640,53 @@ var Linq = /** @class */ (function () {
                                     group: []
                                 });
                             }
-                            groups[ndx].group.push(iterValue.value);
+                            groups[ndx].group.push(val);
                         };
-                        while (!(iterValue = iter.next()).done) {
-                            _loop_1();
+                        try {
+                            for (_a = __values(that.getIter()), _b = _a.next(); !_b.done; _b = _a.next()) {
+                                val = _b.value;
+                                _loop_1(val);
+                            }
+                        }
+                        catch (e_15_1) { e_15 = { error: e_15_1 }; }
+                        finally {
+                            try {
+                                if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                            }
+                            finally { if (e_15) throw e_15.error; }
                         }
                         if (resultSelector) {
                             groups = groups.map(function (group) {
                                 return resultSelector(group.key, new Linq(group.group));
                             });
                         }
-                        iter = groups[Symbol.iterator]();
-                        _a.label = 1;
+                        _e.label = 1;
                     case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 3];
-                        return [4 /*yield*/, iterValue.value];
+                        _e.trys.push([1, 6, 7, 8]);
+                        groups_1 = __values(groups), groups_1_1 = groups_1.next();
+                        _e.label = 2;
                     case 2:
-                        _a.sent();
-                        return [3 /*break*/, 1];
-                    case 3: return [2 /*return*/];
+                        if (!!groups_1_1.done) return [3 /*break*/, 5];
+                        group = groups_1_1.value;
+                        return [4 /*yield*/, group];
+                    case 3:
+                        _e.sent();
+                        _e.label = 4;
+                    case 4:
+                        groups_1_1 = groups_1.next();
+                        return [3 /*break*/, 2];
+                    case 5: return [3 /*break*/, 8];
+                    case 6:
+                        e_14_1 = _e.sent();
+                        e_14 = { error: e_14_1 };
+                        return [3 /*break*/, 8];
+                    case 7:
+                        try {
+                            if (groups_1_1 && !groups_1_1.done && (_d = groups_1.return)) _d.call(groups_1);
+                        }
+                        finally { if (e_14) throw e_14.error; }
+                        return [7 /*endfinally*/];
+                    case 8: return [2 /*return*/];
                 }
             });
         }
@@ -502,13 +708,24 @@ var Linq = /** @class */ (function () {
      * @param fieldSelector If provided, a function to transform the element into the desired format
      */
     Linq.prototype.joinString = function (separator, fieldSelector) {
+        var e_16, _a;
         fieldSelector = fieldSelector || itemAsSelfSelector;
-        var iter = this.getIter(), iterValue, result = '', index = 0;
-        while (!(iterValue = iter.next()).done) {
-            if (index > 0) {
-                result += separator;
+        var result = '', index = 0;
+        try {
+            for (var _b = __values(this.getIter()), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var val = _c.value;
+                if (index > 0) {
+                    result += separator;
+                }
+                result += fieldSelector(val, index++);
             }
-            result += fieldSelector(iterValue.value, index++);
+        }
+        catch (e_16_1) { e_16 = { error: e_16_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_16) throw e_16.error; }
         }
         return result;
     };
@@ -518,12 +735,23 @@ var Linq = /** @class */ (function () {
      * @param predicate If provided, a function to test each element for a condition
      */
     Linq.prototype.last = function (predicate) {
-        var iter = this.getIter(), iterValue, last = undefined, index = 0;
-        while (!(iterValue = iter.next()).done) {
-            if (predicate && !predicate(iterValue.value, index++)) {
-                continue;
+        var e_17, _a;
+        var last = undefined, index = 0;
+        try {
+            for (var _b = __values(this.getIter()), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var val = _c.value;
+                if (predicate && !predicate(val, index++)) {
+                    continue;
+                }
+                last = val;
             }
-            last = iterValue.value;
+        }
+        catch (e_17_1) { e_17 = { error: e_17_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_17) throw e_17.error; }
         }
         return last;
     };
@@ -533,18 +761,39 @@ var Linq = /** @class */ (function () {
      * @param fieldSelector If provided, a transform function to apply to each element
      */
     Linq.prototype.max = function (fieldSelector) {
+        var e_18, _a, e_19, _b;
         fieldSelector = fieldSelector || itemAsNumberSelector;
-        var iter = this.getIter(), iterValue, max = undefined, index = 0;
-        while (!(iterValue = iter.next()).done) {
-            max = iterValue.value;
-            var maxVal = fieldSelector(iterValue.value, index++);
-            while (!(iterValue = iter.next()).done) {
-                var val = fieldSelector(iterValue.value, index++);
-                if (val > maxVal) {
-                    max = iterValue.value;
-                    maxVal = val;
+        var iter = this.getIter(), max = undefined, index = 0;
+        try {
+            for (var iter_3 = __values(iter), iter_3_1 = iter_3.next(); !iter_3_1.done; iter_3_1 = iter_3.next()) {
+                var val = iter_3_1.value;
+                max = val;
+                var maxVal = fieldSelector(val, index++);
+                try {
+                    for (var iter_4 = (e_19 = void 0, __values(iter)), iter_4_1 = iter_4.next(); !iter_4_1.done; iter_4_1 = iter_4.next()) {
+                        var item = iter_4_1.value;
+                        var val_1 = fieldSelector(item, index++);
+                        if (val_1 > maxVal) {
+                            max = item;
+                            maxVal = val_1;
+                        }
+                    }
+                }
+                catch (e_19_1) { e_19 = { error: e_19_1 }; }
+                finally {
+                    try {
+                        if (iter_4_1 && !iter_4_1.done && (_b = iter_4.return)) _b.call(iter_4);
+                    }
+                    finally { if (e_19) throw e_19.error; }
                 }
             }
+        }
+        catch (e_18_1) { e_18 = { error: e_18_1 }; }
+        finally {
+            try {
+                if (iter_3_1 && !iter_3_1.done && (_a = iter_3.return)) _a.call(iter_3);
+            }
+            finally { if (e_18) throw e_18.error; }
         }
         return max;
     };
@@ -554,18 +803,39 @@ var Linq = /** @class */ (function () {
      * @param fieldSelector If provided, a transform function to apply to each element
      */
     Linq.prototype.min = function (fieldSelector) {
+        var e_20, _a, e_21, _b;
         fieldSelector = fieldSelector || itemAsNumberSelector;
-        var iter = this.getIter(), iterValue, min = undefined, index = 0;
-        while (!(iterValue = iter.next()).done) {
-            min = iterValue.value;
-            var minVal = fieldSelector(iterValue.value, index++);
-            while (!(iterValue = iter.next()).done) {
-                var val = fieldSelector(iterValue.value, index++);
-                if (val < minVal) {
-                    min = iterValue.value;
-                    minVal = val;
+        var iter = this.getIter(), min = undefined, index = 0;
+        try {
+            for (var iter_5 = __values(iter), iter_5_1 = iter_5.next(); !iter_5_1.done; iter_5_1 = iter_5.next()) {
+                var val = iter_5_1.value;
+                min = val;
+                var minVal = fieldSelector(val, index++);
+                try {
+                    for (var iter_6 = (e_21 = void 0, __values(iter)), iter_6_1 = iter_6.next(); !iter_6_1.done; iter_6_1 = iter_6.next()) {
+                        var item = iter_6_1.value;
+                        var val_2 = fieldSelector(item, index++);
+                        if (val_2 < minVal) {
+                            min = item;
+                            minVal = val_2;
+                        }
+                    }
+                }
+                catch (e_21_1) { e_21 = { error: e_21_1 }; }
+                finally {
+                    try {
+                        if (iter_6_1 && !iter_6_1.done && (_b = iter_6.return)) _b.call(iter_6);
+                    }
+                    finally { if (e_21) throw e_21.error; }
                 }
             }
+        }
+        catch (e_20_1) { e_20 = { error: e_20_1 }; }
+        finally {
+            try {
+                if (iter_5_1 && !iter_5_1.done && (_a = iter_5.return)) _a.call(iter_5);
+            }
+            finally { if (e_20) throw e_20.error; }
         }
         return min;
     };
@@ -597,31 +867,48 @@ var Linq = /** @class */ (function () {
         }
         var that = this;
         function prepend() {
-            var i, iter, iterValue;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var i, _a, _b, val, e_22_1;
+            var e_22, _c;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
                     case 0:
                         i = 0;
-                        _a.label = 1;
+                        _d.label = 1;
                     case 1:
                         if (!(i < items.length)) return [3 /*break*/, 4];
                         return [4 /*yield*/, items[i]];
                     case 2:
-                        _a.sent();
-                        _a.label = 3;
+                        _d.sent();
+                        _d.label = 3;
                     case 3:
                         i++;
                         return [3 /*break*/, 1];
                     case 4:
-                        iter = that.getIter();
-                        _a.label = 5;
+                        _d.trys.push([4, 9, 10, 11]);
+                        _a = __values(that.getIter()), _b = _a.next();
+                        _d.label = 5;
                     case 5:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 7];
-                        return [4 /*yield*/, iterValue.value];
+                        if (!!_b.done) return [3 /*break*/, 8];
+                        val = _b.value;
+                        return [4 /*yield*/, val];
                     case 6:
-                        _a.sent();
+                        _d.sent();
+                        _d.label = 7;
+                    case 7:
+                        _b = _a.next();
                         return [3 /*break*/, 5];
-                    case 7: return [2 /*return*/];
+                    case 8: return [3 /*break*/, 11];
+                    case 9:
+                        e_22_1 = _d.sent();
+                        e_22 = { error: e_22_1 };
+                        return [3 /*break*/, 11];
+                    case 10:
+                        try {
+                            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                        }
+                        finally { if (e_22) throw e_22.error; }
+                        return [7 /*endfinally*/];
+                    case 11: return [2 /*return*/];
                 }
             });
         }
@@ -631,12 +918,42 @@ var Linq = /** @class */ (function () {
      * Inverts the order of the elements in a sequence
      */
     Linq.prototype.reverse = function () {
-        var iter = this.getIter(), iterValue, reversed = [];
-        while (!(iterValue = iter.next()).done) {
-            reversed.push(iterValue.value);
+        var that = this;
+        function reverse() {
+            var _a, _b, val, e_23_1;
+            var e_23, _c;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
+                    case 0:
+                        _d.trys.push([0, 5, 6, 7]);
+                        _a = __values(that.toArray().reverse()), _b = _a.next();
+                        _d.label = 1;
+                    case 1:
+                        if (!!_b.done) return [3 /*break*/, 4];
+                        val = _b.value;
+                        return [4 /*yield*/, val];
+                    case 2:
+                        _d.sent();
+                        _d.label = 3;
+                    case 3:
+                        _b = _a.next();
+                        return [3 /*break*/, 1];
+                    case 4: return [3 /*break*/, 7];
+                    case 5:
+                        e_23_1 = _d.sent();
+                        e_23 = { error: e_23_1 };
+                        return [3 /*break*/, 7];
+                    case 6:
+                        try {
+                            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                        }
+                        finally { if (e_23) throw e_23.error; }
+                        return [7 /*endfinally*/];
+                    case 7: return [2 /*return*/];
+                }
+            });
         }
-        reversed.reverse();
-        return new Linq(reversed);
+        return new Linq(reverse);
     };
     /**
      * Projects each element of a sequence into a new form
@@ -646,19 +963,39 @@ var Linq = /** @class */ (function () {
     Linq.prototype.select = function (selector) {
         var that = this;
         function select() {
-            var iter, iterValue, index;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var index, _a, _b, val, e_24_1;
+            var e_24, _c;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
                     case 0:
-                        iter = that.getIter(), index = 0;
-                        _a.label = 1;
+                        index = 0;
+                        _d.label = 1;
                     case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 3];
-                        return [4 /*yield*/, selector(iterValue.value, index++)];
+                        _d.trys.push([1, 6, 7, 8]);
+                        _a = __values(that.getIter()), _b = _a.next();
+                        _d.label = 2;
                     case 2:
-                        _a.sent();
-                        return [3 /*break*/, 1];
-                    case 3: return [2 /*return*/];
+                        if (!!_b.done) return [3 /*break*/, 5];
+                        val = _b.value;
+                        return [4 /*yield*/, selector(val, index++)];
+                    case 3:
+                        _d.sent();
+                        _d.label = 4;
+                    case 4:
+                        _b = _a.next();
+                        return [3 /*break*/, 2];
+                    case 5: return [3 /*break*/, 8];
+                    case 6:
+                        e_24_1 = _d.sent();
+                        e_24 = { error: e_24_1 };
+                        return [3 /*break*/, 8];
+                    case 7:
+                        try {
+                            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                        }
+                        finally { if (e_24) throw e_24.error; }
+                        return [7 /*endfinally*/];
+                    case 8: return [2 /*return*/];
                 }
             });
         }
@@ -673,31 +1010,66 @@ var Linq = /** @class */ (function () {
     Linq.prototype.selectMany = function (itemsSelector, resultSelector) {
         var that = this;
         function selectMany() {
-            var iter, iterValue, index, subCollection, iterChild, iterChildValue;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var index, _a, _b, val, subCollection, subCollection_1, subCollection_1_1, val_3, e_25_1, e_26_1;
+            var e_26, _c, e_25, _d;
+            return __generator(this, function (_e) {
+                switch (_e.label) {
                     case 0:
-                        iter = that.getIter(), index = 0;
-                        _a.label = 1;
+                        index = 0;
+                        _e.label = 1;
                     case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 7];
-                        subCollection = itemsSelector(iterValue.value, index++);
-                        if (!resultSelector) return [3 /*break*/, 3];
-                        return [4 /*yield*/, resultSelector(iterValue.value, subCollection)];
+                        _e.trys.push([1, 13, 14, 15]);
+                        _a = __values(that.getIter()), _b = _a.next();
+                        _e.label = 2;
                     case 2:
-                        _a.sent();
-                        return [3 /*break*/, 6];
+                        if (!!_b.done) return [3 /*break*/, 12];
+                        val = _b.value;
+                        subCollection = itemsSelector(val, index++);
+                        if (!resultSelector) return [3 /*break*/, 4];
+                        return [4 /*yield*/, resultSelector(val, subCollection)];
                     case 3:
-                        iterChild = subCollection[Symbol.iterator](), iterChildValue = void 0;
-                        _a.label = 4;
+                        _e.sent();
+                        return [3 /*break*/, 11];
                     case 4:
-                        if (!!(iterChildValue = iterChild.next()).done) return [3 /*break*/, 6];
-                        return [4 /*yield*/, iterChildValue.value];
+                        _e.trys.push([4, 9, 10, 11]);
+                        subCollection_1 = (e_25 = void 0, __values(subCollection)), subCollection_1_1 = subCollection_1.next();
+                        _e.label = 5;
                     case 5:
-                        _a.sent();
-                        return [3 /*break*/, 4];
-                    case 6: return [3 /*break*/, 1];
-                    case 7: return [2 /*return*/];
+                        if (!!subCollection_1_1.done) return [3 /*break*/, 8];
+                        val_3 = subCollection_1_1.value;
+                        return [4 /*yield*/, val_3];
+                    case 6:
+                        _e.sent();
+                        _e.label = 7;
+                    case 7:
+                        subCollection_1_1 = subCollection_1.next();
+                        return [3 /*break*/, 5];
+                    case 8: return [3 /*break*/, 11];
+                    case 9:
+                        e_25_1 = _e.sent();
+                        e_25 = { error: e_25_1 };
+                        return [3 /*break*/, 11];
+                    case 10:
+                        try {
+                            if (subCollection_1_1 && !subCollection_1_1.done && (_d = subCollection_1.return)) _d.call(subCollection_1);
+                        }
+                        finally { if (e_25) throw e_25.error; }
+                        return [7 /*endfinally*/];
+                    case 11:
+                        _b = _a.next();
+                        return [3 /*break*/, 2];
+                    case 12: return [3 /*break*/, 15];
+                    case 13:
+                        e_26_1 = _e.sent();
+                        e_26 = { error: e_26_1 };
+                        return [3 /*break*/, 15];
+                    case 14:
+                        try {
+                            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                        }
+                        finally { if (e_26) throw e_26.error; }
+                        return [7 /*endfinally*/];
+                    case 15: return [2 /*return*/];
                 }
             });
         }
@@ -711,23 +1083,39 @@ var Linq = /** @class */ (function () {
     Linq.prototype.skip = function (count) {
         var that = this;
         function skip() {
-            var iter, iterValue;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var _a, _b, val, e_27_1;
+            var e_27, _c;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
                     case 0:
-                        iter = that.getIter();
-                        _a.label = 1;
+                        _d.trys.push([0, 6, 7, 8]);
+                        _a = __values(that.getIter()), _b = _a.next();
+                        _d.label = 1;
                     case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 5];
+                        if (!!_b.done) return [3 /*break*/, 5];
+                        val = _b.value;
                         if (!(count > 0)) return [3 /*break*/, 2];
                         count--;
                         return [3 /*break*/, 4];
-                    case 2: return [4 /*yield*/, iterValue.value];
+                    case 2: return [4 /*yield*/, val];
                     case 3:
-                        _a.sent();
-                        _a.label = 4;
-                    case 4: return [3 /*break*/, 1];
-                    case 5: return [2 /*return*/];
+                        _d.sent();
+                        _d.label = 4;
+                    case 4:
+                        _b = _a.next();
+                        return [3 /*break*/, 1];
+                    case 5: return [3 /*break*/, 8];
+                    case 6:
+                        e_27_1 = _d.sent();
+                        e_27 = { error: e_27_1 };
+                        return [3 /*break*/, 8];
+                    case 7:
+                        try {
+                            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                        }
+                        finally { if (e_27) throw e_27.error; }
+                        return [7 /*endfinally*/];
+                    case 8: return [2 /*return*/];
                 }
             });
         }
@@ -741,27 +1129,47 @@ var Linq = /** @class */ (function () {
     Linq.prototype.skipWhile = function (predicate) {
         var that = this;
         function skipWhile() {
-            var iter, iterValue, skipping, index;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var skipping, index, _a, _b, val, e_28_1;
+            var e_28, _c;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
                     case 0:
-                        iter = that.getIter(), skipping = true, index = 0;
-                        _a.label = 1;
+                        skipping = true, index = 0;
+                        _d.label = 1;
                     case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 3];
+                        _d.trys.push([1, 6, 7, 8]);
+                        _a = __values(that.getIter()), _b = _a.next();
+                        _d.label = 2;
+                    case 2:
+                        if (!!_b.done) return [3 /*break*/, 5];
+                        val = _b.value;
                         if (skipping) {
-                            if (predicate(iterValue.value, index++)) {
-                                return [3 /*break*/, 1];
+                            if (predicate(val, index++)) {
+                                return [3 /*break*/, 4];
                             }
                             else {
                                 skipping = false;
                             }
                         }
-                        return [4 /*yield*/, iterValue.value];
-                    case 2:
-                        _a.sent();
-                        return [3 /*break*/, 1];
-                    case 3: return [2 /*return*/];
+                        return [4 /*yield*/, val];
+                    case 3:
+                        _d.sent();
+                        _d.label = 4;
+                    case 4:
+                        _b = _a.next();
+                        return [3 /*break*/, 2];
+                    case 5: return [3 /*break*/, 8];
+                    case 6:
+                        e_28_1 = _d.sent();
+                        e_28 = { error: e_28_1 };
+                        return [3 /*break*/, 8];
+                    case 7:
+                        try {
+                            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                        }
+                        finally { if (e_28) throw e_28.error; }
+                        return [7 /*endfinally*/];
+                    case 8: return [2 /*return*/];
                 }
             });
         }
@@ -773,14 +1181,35 @@ var Linq = /** @class */ (function () {
      * @param fieldSelector If provided, a transform function to apply to each element
      */
     Linq.prototype.sum = function (fieldSelector) {
+        var e_29, _a, e_30, _b;
         fieldSelector = fieldSelector || itemAsNumberSelector;
-        var iter = this.getIter(), iterValue, index = 0;
-        while (!(iterValue = iter.next()).done) {
-            var sum = fieldSelector(iterValue.value, index++);
-            while (!(iterValue = iter.next()).done) {
-                sum += fieldSelector(iterValue.value, index++);
+        var iter = this.getIter(), index = 0;
+        try {
+            for (var iter_7 = __values(iter), iter_7_1 = iter_7.next(); !iter_7_1.done; iter_7_1 = iter_7.next()) {
+                var val = iter_7_1.value;
+                var sum = fieldSelector(val, index++);
+                try {
+                    for (var _c = (e_30 = void 0, __values(this.getIter())), _d = _c.next(); !_d.done; _d = _c.next()) {
+                        val = _d.value;
+                        sum += fieldSelector(val, index++);
+                    }
+                }
+                catch (e_30_1) { e_30 = { error: e_30_1 }; }
+                finally {
+                    try {
+                        if (_d && !_d.done && (_b = _c.return)) _b.call(_c);
+                    }
+                    finally { if (e_30) throw e_30.error; }
+                }
+                return sum;
             }
-            return sum;
+        }
+        catch (e_29_1) { e_29 = { error: e_29_1 }; }
+        finally {
+            try {
+                if (iter_7_1 && !iter_7_1.done && (_a = iter_7.return)) _a.call(iter_7);
+            }
+            finally { if (e_29) throw e_29.error; }
         }
         return undefined;
     };
@@ -792,22 +1221,38 @@ var Linq = /** @class */ (function () {
     Linq.prototype.take = function (count) {
         var that = this;
         function take() {
-            var iter, iterValue;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var _a, _b, val, e_31_1;
+            var e_31, _c;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
                     case 0:
-                        iter = that.getIter();
-                        _a.label = 1;
+                        _d.trys.push([0, 5, 6, 7]);
+                        _a = __values(that.getIter()), _b = _a.next();
+                        _d.label = 1;
                     case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 4];
+                        if (!!_b.done) return [3 /*break*/, 4];
+                        val = _b.value;
                         if (!(count > 0)) return [3 /*break*/, 3];
-                        return [4 /*yield*/, iterValue.value];
+                        return [4 /*yield*/, val];
                     case 2:
-                        _a.sent();
+                        _d.sent();
                         count--;
-                        _a.label = 3;
-                    case 3: return [3 /*break*/, 1];
-                    case 4: return [2 /*return*/];
+                        _d.label = 3;
+                    case 3:
+                        _b = _a.next();
+                        return [3 /*break*/, 1];
+                    case 4: return [3 /*break*/, 7];
+                    case 5:
+                        e_31_1 = _d.sent();
+                        e_31 = { error: e_31_1 };
+                        return [3 /*break*/, 7];
+                    case 6:
+                        try {
+                            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                        }
+                        finally { if (e_31) throw e_31.error; }
+                        return [7 /*endfinally*/];
+                    case 7: return [2 /*return*/];
                 }
             });
         }
@@ -821,25 +1266,44 @@ var Linq = /** @class */ (function () {
     Linq.prototype.takeWhile = function (predicate) {
         var that = this;
         function takeWhile() {
-            var iter, iterValue, taking, index;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var taking, index, _a, _b, val, e_32_1;
+            var e_32, _c;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
                     case 0:
-                        iter = that.getIter(), taking = true, index = 0;
-                        _a.label = 1;
+                        taking = true, index = 0;
+                        _d.label = 1;
                     case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 5];
-                        if (!taking) return [3 /*break*/, 4];
-                        if (!predicate(iterValue.value, index++)) return [3 /*break*/, 3];
-                        return [4 /*yield*/, iterValue.value];
+                        _d.trys.push([1, 7, 8, 9]);
+                        _a = __values(that.getIter()), _b = _a.next();
+                        _d.label = 2;
                     case 2:
-                        _a.sent();
-                        return [3 /*break*/, 4];
+                        if (!!_b.done) return [3 /*break*/, 6];
+                        val = _b.value;
+                        if (!taking) return [3 /*break*/, 5];
+                        if (!predicate(val, index++)) return [3 /*break*/, 4];
+                        return [4 /*yield*/, val];
                     case 3:
+                        _d.sent();
+                        return [3 /*break*/, 5];
+                    case 4:
                         taking = false;
-                        _a.label = 4;
-                    case 4: return [3 /*break*/, 1];
-                    case 5: return [2 /*return*/];
+                        _d.label = 5;
+                    case 5:
+                        _b = _a.next();
+                        return [3 /*break*/, 2];
+                    case 6: return [3 /*break*/, 9];
+                    case 7:
+                        e_32_1 = _d.sent();
+                        e_32 = { error: e_32_1 };
+                        return [3 /*break*/, 9];
+                    case 8:
+                        try {
+                            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                        }
+                        finally { if (e_32) throw e_32.error; }
+                        return [7 /*endfinally*/];
+                    case 9: return [2 /*return*/];
                 }
             });
         }
@@ -865,9 +1329,20 @@ var Linq = /** @class */ (function () {
      * Creates an array from a the sequence
      */
     Linq.prototype.toArray = function () {
-        var iter = this.getIter(), iterValue, result = [];
-        while (!(iterValue = iter.next()).done) {
-            result.push(iterValue.value);
+        var e_33, _a;
+        var result = [];
+        try {
+            for (var _b = __values(this.getIter()), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var val = _c.value;
+                result.push(val);
+            }
+        }
+        catch (e_33_1) { e_33 = { error: e_33_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_33) throw e_33.error; }
         }
         return result;
     };
@@ -878,12 +1353,23 @@ var Linq = /** @class */ (function () {
      * @param valueSelector If provided, a transform function to produce a result element value from each element
      */
     Linq.prototype.toMap = function (keySelector, valueSelector) {
-        var iter = this.getIter(), iterValue, result = new Map(), index = 0;
-        while (!(iterValue = iter.next()).done) {
-            result.set(keySelector(iterValue.value, index), valueSelector
-                ? valueSelector(iterValue.value, index)
-                : iterValue.value);
-            index++;
+        var e_34, _a;
+        var result = new Map(), index = 0;
+        try {
+            for (var _b = __values(this.getIter()), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var val = _c.value;
+                result.set(keySelector(val, index), valueSelector
+                    ? valueSelector(val, index)
+                    : val);
+                index++;
+            }
+        }
+        catch (e_34_1) { e_34 = { error: e_34_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_34) throw e_34.error; }
         }
         return result;
     };
@@ -894,12 +1380,23 @@ var Linq = /** @class */ (function () {
      * @param valueSelector If provided, a transform function to produce a result element value from each element
      */
     Linq.prototype.toObject = function (keySelector, valueSelector) {
-        var iter = this.getIter(), iterValue, result = {}, index = 0;
-        while (!(iterValue = iter.next()).done) {
-            result[keySelector(iterValue.value, index)] = valueSelector
-                ? valueSelector(iterValue.value, index)
-                : iterValue.value;
-            index++;
+        var e_35, _a;
+        var result = {}, index = 0;
+        try {
+            for (var _b = __values(this.getIter()), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var val = _c.value;
+                result[keySelector(val, index)] = valueSelector
+                    ? valueSelector(val, index)
+                    : val;
+                index++;
+            }
+        }
+        catch (e_35_1) { e_35 = { error: e_35_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_35) throw e_35.error; }
         }
         return result;
     };
@@ -907,9 +1404,20 @@ var Linq = /** @class */ (function () {
      * Creates a Set from the sequence
      */
     Linq.prototype.toSet = function () {
-        var iter = this.getIter(), iterValue, result = new Set();
-        while (!(iterValue = iter.next()).done) {
-            result.add(iterValue.value);
+        var e_36, _a;
+        var result = new Set();
+        try {
+            for (var _b = __values(this.getIter()), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var val = _c.value;
+                result.add(val);
+            }
+        }
+        catch (e_36_1) { e_36 = { error: e_36_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_36) throw e_36.error; }
         }
         return result;
     };
@@ -924,21 +1432,40 @@ var Linq = /** @class */ (function () {
     Linq.prototype.where = function (predicate) {
         var that = this;
         function where() {
-            var iter, iterValue, index;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var index, _a, _b, val, e_37_1;
+            var e_37, _c;
+            return __generator(this, function (_d) {
+                switch (_d.label) {
                     case 0:
-                        iter = that.getIter(), index = 0;
-                        _a.label = 1;
+                        index = 0;
+                        _d.label = 1;
                     case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 4];
-                        if (!predicate(iterValue.value, index++)) return [3 /*break*/, 3];
-                        return [4 /*yield*/, iterValue.value];
+                        _d.trys.push([1, 6, 7, 8]);
+                        _a = __values(that.getIter()), _b = _a.next();
+                        _d.label = 2;
                     case 2:
-                        _a.sent();
-                        _a.label = 3;
-                    case 3: return [3 /*break*/, 1];
-                    case 4: return [2 /*return*/];
+                        if (!!_b.done) return [3 /*break*/, 5];
+                        val = _b.value;
+                        if (!predicate(val, index++)) return [3 /*break*/, 4];
+                        return [4 /*yield*/, val];
+                    case 3:
+                        _d.sent();
+                        _d.label = 4;
+                    case 4:
+                        _b = _a.next();
+                        return [3 /*break*/, 2];
+                    case 5: return [3 /*break*/, 8];
+                    case 6:
+                        e_37_1 = _d.sent();
+                        e_37 = { error: e_37_1 };
+                        return [3 /*break*/, 8];
+                    case 7:
+                        try {
+                            if (_b && !_b.done && (_c = _a.return)) _c.call(_a);
+                        }
+                        finally { if (e_37) throw e_37.error; }
+                        return [7 /*endfinally*/];
+                    case 8: return [2 /*return*/];
                 }
             });
         }
@@ -952,7 +1479,7 @@ var LinqOrdered = /** @class */ (function (_super) {
     function LinqOrdered(iter, keySelector, ascending, ordering) {
         var _this = _super.call(this) || this;
         _this.ordering = [];
-        _this.dataIterator = iter[Symbol.iterator].bind(iter);
+        _this.underlyingLinq = iter;
         if (ordering) {
             _this.ordering = ordering;
         }
@@ -960,20 +1487,17 @@ var LinqOrdered = /** @class */ (function (_super) {
             keySelector: keySelector,
             order: ascending ? 1 : -1
         });
-        _this.getIter = _this.orderingFunc;
+        _this.getIter = function () { return _this.orderingFunc(); };
         return _this;
     }
     LinqOrdered.prototype.orderingFunc = function () {
-        var iter, iterValue, sortedValues;
+        var sortedValues, sortedValues_1, sortedValues_1_1, val, e_38_1;
+        var e_38, _a;
         var _this = this;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        return __generator(this, function (_b) {
+            switch (_b.label) {
                 case 0:
-                    iter = this.dataIterator(), sortedValues = [];
-                    while (!(iterValue = iter.next()).done) {
-                        sortedValues.push(iterValue.value);
-                    }
-                    // Sorting processes
+                    sortedValues = this.underlyingLinq.toArray();
                     sortedValues.sort(function (a, b) {
                         for (var i = 0; i < _this.ordering.length; i++) {
                             var fieldA = _this.ordering[i].keySelector(a), fieldB = _this.ordering[i].keySelector(b);
@@ -986,16 +1510,33 @@ var LinqOrdered = /** @class */ (function (_super) {
                         }
                         return 0;
                     });
-                    // Output values
-                    iter = sortedValues[Symbol.iterator]();
-                    _a.label = 1;
+                    _b.label = 1;
                 case 1:
-                    if (!!(iterValue = iter.next()).done) return [3 /*break*/, 3];
-                    return [4 /*yield*/, iterValue.value];
+                    _b.trys.push([1, 6, 7, 8]);
+                    sortedValues_1 = __values(sortedValues), sortedValues_1_1 = sortedValues_1.next();
+                    _b.label = 2;
                 case 2:
-                    _a.sent();
-                    return [3 /*break*/, 1];
-                case 3: return [2 /*return*/];
+                    if (!!sortedValues_1_1.done) return [3 /*break*/, 5];
+                    val = sortedValues_1_1.value;
+                    return [4 /*yield*/, val];
+                case 3:
+                    _b.sent();
+                    _b.label = 4;
+                case 4:
+                    sortedValues_1_1 = sortedValues_1.next();
+                    return [3 /*break*/, 2];
+                case 5: return [3 /*break*/, 8];
+                case 6:
+                    e_38_1 = _b.sent();
+                    e_38 = { error: e_38_1 };
+                    return [3 /*break*/, 8];
+                case 7:
+                    try {
+                        if (sortedValues_1_1 && !sortedValues_1_1.done && (_a = sortedValues_1.return)) _a.call(sortedValues_1);
+                    }
+                    finally { if (e_38) throw e_38.error; }
+                    return [7 /*endfinally*/];
+                case 8: return [2 /*return*/];
             }
         });
     };
@@ -1006,7 +1547,7 @@ var LinqOrdered = /** @class */ (function (_super) {
      * @param keySelector A function to extract a key from an element
      */
     LinqOrdered.prototype.orderBy = function (keySelector) {
-        return new LinqOrdered(this, keySelector, true);
+        return new LinqOrdered(this.underlyingLinq, keySelector, true);
     };
     /**
      * Sorts the elements of a sequence in descending order according to a key. WARNING: will overide the previous ordering call
@@ -1014,7 +1555,7 @@ var LinqOrdered = /** @class */ (function (_super) {
      * @param keySelector A function to extract a key from an element
      */
     LinqOrdered.prototype.orderByDescending = function (keySelector) {
-        return new LinqOrdered(this, keySelector, false);
+        return new LinqOrdered(this.underlyingLinq, keySelector, false);
     };
     /**
      * Performs a subsequent ordering of the elements in a sequence in ascending order according to a key
@@ -1022,7 +1563,7 @@ var LinqOrdered = /** @class */ (function (_super) {
      * @param keySelector A function to extract a key from each element
      */
     LinqOrdered.prototype.thenBy = function (keySelector) {
-        return new LinqOrdered(this, keySelector, true, this.ordering.slice(0));
+        return new LinqOrdered(this.underlyingLinq, keySelector, true, this.ordering.slice(0));
     };
     /**
      * Performs a subsequent ordering of the elements in a sequence in descending order according to a key
@@ -1030,8 +1571,7 @@ var LinqOrdered = /** @class */ (function (_super) {
      * @param keySelector A function to extract a key from each element
      */
     LinqOrdered.prototype.thenByDescending = function (keySelector) {
-        return new LinqOrdered(this, keySelector, false, this.ordering.slice(0));
+        return new LinqOrdered(this.underlyingLinq, keySelector, false, this.ordering.slice(0));
     };
     return LinqOrdered;
 }(Linq));
-exports.LinqOrdered = LinqOrdered;
