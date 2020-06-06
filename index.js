@@ -44,7 +44,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LinqOrdered = exports.Linq = void 0;
+exports.Linq = void 0;
 function itemAsNumberSelector(item) {
     return parseFloat(item);
 }
@@ -952,7 +952,7 @@ var LinqOrdered = /** @class */ (function (_super) {
     function LinqOrdered(iter, keySelector, ascending, ordering) {
         var _this = _super.call(this) || this;
         _this.ordering = [];
-        _this.dataIterator = iter[Symbol.iterator].bind(iter);
+        _this.underlyingLinq = iter;
         if (ordering) {
             _this.ordering = ordering;
         }
@@ -964,15 +964,12 @@ var LinqOrdered = /** @class */ (function (_super) {
         return _this;
     }
     LinqOrdered.prototype.orderingFunc = function () {
-        var iter, iterValue, sortedValues;
+        var sortedValues, iter, iterValue;
         var _this = this;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    iter = this.dataIterator(), sortedValues = [];
-                    while (!(iterValue = iter.next()).done) {
-                        sortedValues.push(iterValue.value);
-                    }
+                    sortedValues = this.underlyingLinq.toArray();
                     // Sorting processes
                     sortedValues.sort(function (a, b) {
                         for (var i = 0; i < _this.ordering.length; i++) {
@@ -986,7 +983,6 @@ var LinqOrdered = /** @class */ (function (_super) {
                         }
                         return 0;
                     });
-                    // Output values
                     iter = sortedValues[Symbol.iterator]();
                     _a.label = 1;
                 case 1:
@@ -1022,7 +1018,7 @@ var LinqOrdered = /** @class */ (function (_super) {
      * @param keySelector A function to extract a key from each element
      */
     LinqOrdered.prototype.thenBy = function (keySelector) {
-        return new LinqOrdered(this, keySelector, true, this.ordering.slice(0));
+        return new LinqOrdered(this.underlyingLinq, keySelector, true, this.ordering.slice(0));
     };
     /**
      * Performs a subsequent ordering of the elements in a sequence in descending order according to a key
@@ -1030,8 +1026,7 @@ var LinqOrdered = /** @class */ (function (_super) {
      * @param keySelector A function to extract a key from each element
      */
     LinqOrdered.prototype.thenByDescending = function (keySelector) {
-        return new LinqOrdered(this, keySelector, false, this.ordering.slice(0));
+        return new LinqOrdered(this.underlyingLinq, keySelector, false, this.ordering.slice(0));
     };
     return LinqOrdered;
 }(Linq));
-exports.LinqOrdered = LinqOrdered;

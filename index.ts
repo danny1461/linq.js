@@ -1116,18 +1116,18 @@ export class Linq<T> implements Iterable<T> {
     }
 }
 
-export class LinqOrdered<T> extends Linq<T> {
+class LinqOrdered<T> extends Linq<T> {
     /* Instance Members */
 
-    private dataIterator: () => Iterator<T>;
+    private underlyingLinq: Linq<T>;
     private ordering: OrderingRecord<T>[] = [];
 
-    public constructor(iter: Iterable<T>, keySelector: (item: T) => any, ascending: boolean);
-    public constructor(iter: Iterable<T>, keySelector: (item: T) => any, ascending: boolean, ordering: OrderingRecord<T>[]);
-    public constructor(iter: Iterable<T>, keySelector: (item: T) => any, ascending: boolean, ordering?: OrderingRecord<T>[]) {
+    public constructor(iter: Linq<T>, keySelector: (item: T) => any, ascending: boolean);
+    public constructor(iter: Linq<T>, keySelector: (item: T) => any, ascending: boolean, ordering: OrderingRecord<T>[]);
+    public constructor(iter: Linq<T>, keySelector: (item: T) => any, ascending: boolean, ordering?: OrderingRecord<T>[]) {
         super();
 
-        this.dataIterator = iter[Symbol.iterator].bind(iter);
+        this.underlyingLinq = iter;
         if (ordering) {
             this.ordering = ordering;
         }
@@ -1140,13 +1140,7 @@ export class LinqOrdered<T> extends Linq<T> {
     }
 
     private *orderingFunc(): Generator<T, void, any> {
-        let iter: Iterator<T> = this.dataIterator(),
-            iterValue: IteratorValue<T>,
-            sortedValues: T[] = [];
-        
-        while (!(iterValue = iter.next()).done) {
-            sortedValues.push(iterValue.value);
-        }
+        let sortedValues = this.underlyingLinq.toArray();
 
         // Sorting processes
         sortedValues.sort((a: T, b: T) => {
@@ -1166,7 +1160,8 @@ export class LinqOrdered<T> extends Linq<T> {
         });
 
         // Output values
-        iter = sortedValues[Symbol.iterator]();
+        let iter: Iterator<T> = sortedValues[Symbol.iterator](),
+            iterValue: IteratorValue<T>;
         while (!(iterValue = iter.next()).done) {
             yield iterValue.value;
         }
@@ -1196,7 +1191,7 @@ export class LinqOrdered<T> extends Linq<T> {
      * @param keySelector A function to extract a key from each element
      */
     public thenBy(keySelector: (item: T) => any): Linq<T> {
-        return new LinqOrdered(this, keySelector, true, this.ordering.slice(0));
+        return new LinqOrdered(this.underlyingLinq, keySelector, true, this.ordering.slice(0));
     }
     /**
      * Performs a subsequent ordering of the elements in a sequence in descending order according to a key
@@ -1204,6 +1199,6 @@ export class LinqOrdered<T> extends Linq<T> {
      * @param keySelector A function to extract a key from each element
      */
     public thenByDescending(keySelector: (item: T) => any): Linq<T> {
-        return new LinqOrdered(this, keySelector, false, this.ordering.slice(0));
+        return new LinqOrdered(this.underlyingLinq, keySelector, false, this.ordering.slice(0));
     }
 }
