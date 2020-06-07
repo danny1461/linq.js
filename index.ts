@@ -4,28 +4,6 @@
  */
 
 /**
- * Represents an iteration step
- */
-export interface IteratorValue<T> {
-    value: T;
-    done?: boolean;
-}
-
-/**
- * Represents an iterator
- */
-export interface Iterator<T> {
-    next: () => IteratorValue<T>
-}
-
-/**
- * Represents an object that implements an iterator
- */
-export interface Iterable<T> {
-    [Symbol.iterator]: () => Iterator<T>;
-}
-
-/**
  * Describes an intermediate grouping value
  */
 export interface IGrouping<TKey, TGroup> {
@@ -239,7 +217,7 @@ export class Linq<T> implements Iterable<T> {
      */
     public aggregate(func: Function, seed?: any, resultSelector?: Function): any {
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+            iterValue: IteratorResult<T>,
             accumulate = seed;
         
         while (!(iterValue = iter.next()).done) {
@@ -259,7 +237,7 @@ export class Linq<T> implements Iterable<T> {
      */
     public all(predicate: (item: T, index: number) => boolean): boolean {
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+            iterValue: IteratorResult<T>,
             index = 0;
 
         while (!(iterValue = iter.next()).done) {
@@ -277,7 +255,7 @@ export class Linq<T> implements Iterable<T> {
      */
     public any(predicate?: (item: T, index: number) => boolean): boolean {
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+            iterValue: IteratorResult<T>,
             index = 0;
 
         while (!(iterValue = iter.next()).done) {
@@ -300,7 +278,7 @@ export class Linq<T> implements Iterable<T> {
 
         function* append() {
             let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>;
+                iterValue: IteratorResult<T>;
 
             while (!(iterValue = iter.next()).done) {
                 yield iterValue.value;
@@ -332,7 +310,7 @@ export class Linq<T> implements Iterable<T> {
         fieldSelector = fieldSelector || itemAsNumberSelector;
 
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+            iterValue: IteratorResult<T>,
             index = 0;
 
         while (!(iterValue = iter.next()).done) {
@@ -359,7 +337,7 @@ export class Linq<T> implements Iterable<T> {
 
         function* concatenated() {
             let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>;
+                iterValue: IteratorResult<T>;
             while (!(iterValue = iter.next()).done) {
                 yield iterValue.value;
             }
@@ -381,7 +359,7 @@ export class Linq<T> implements Iterable<T> {
      */
     public contains(value: T): boolean {
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>;
+            iterValue: IteratorResult<T>;
 
         while (!(iterValue = iter.next()).done) {
             if (iterValue.value === value) {
@@ -408,7 +386,7 @@ export class Linq<T> implements Iterable<T> {
      */
     public count(predicate?: (item: T, index: number) => boolean) {
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+            iterValue: IteratorResult<T>,
             count = 0,
             index = 0;
 
@@ -443,7 +421,7 @@ export class Linq<T> implements Iterable<T> {
         function* distinct() {
             let distinct: any[] = [],
                 iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>,
+                iterValue: IteratorResult<T>,
                 index = 0;
 
             while (!(iterValue = iter.next()).done) {
@@ -467,7 +445,7 @@ export class Linq<T> implements Iterable<T> {
      */
     public elementAt(index: number): T|undefined {
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+            iterValue: IteratorResult<T>,
             i = 0;
 
         while (!(iterValue = iter.next()).done) {
@@ -495,7 +473,7 @@ export class Linq<T> implements Iterable<T> {
     public first(predicate: (item: T, index: number) => boolean): T|undefined;
     public first(predicate?: (item: T, index: number) => boolean): T|undefined {
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+            iterValue: IteratorResult<T>,
             index = 0;
 
         while (!(iterValue = iter.next()).done) {
@@ -532,7 +510,7 @@ export class Linq<T> implements Iterable<T> {
 
         function* groupBy() {
             let iter: Iterator<any> = that.getIter(),
-                iterValue: IteratorValue<any>,
+                iterValue: IteratorResult<any>,
                 groups = [],
                 index = 0;
 
@@ -597,7 +575,7 @@ export class Linq<T> implements Iterable<T> {
         fieldSelector = fieldSelector || itemAsSelfSelector;
 
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+            iterValue: IteratorResult<T>,
             result = '',
             index = 0;
 
@@ -628,7 +606,7 @@ export class Linq<T> implements Iterable<T> {
      */
     public last(predicate?: (item: T, index: number) => boolean): T|undefined {
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+            iterValue: IteratorResult<T>,
             last: T|undefined = undefined,
             index = 0;
 
@@ -661,7 +639,7 @@ export class Linq<T> implements Iterable<T> {
         fieldSelector = fieldSelector || itemAsNumberSelector;
 
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+            iterValue: IteratorResult<T>,
             max: T|undefined = undefined,
             index = 0;
 
@@ -699,7 +677,7 @@ export class Linq<T> implements Iterable<T> {
         fieldSelector = fieldSelector || itemAsNumberSelector;
 
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+            iterValue: IteratorResult<T>,
             min: T|undefined = undefined,
             index = 0;
 
@@ -748,7 +726,7 @@ export class Linq<T> implements Iterable<T> {
             }
 
             let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>;
+                iterValue: IteratorResult<T>;
 
             while (!(iterValue = iter.next()).done) {
                 yield iterValue.value;
@@ -762,7 +740,7 @@ export class Linq<T> implements Iterable<T> {
      */
     public reverse(): Linq<T> {
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+            iterValue: IteratorResult<T>,
             reversed: T[] = [];
 
         while (!(iterValue = iter.next()).done) {
@@ -782,7 +760,7 @@ export class Linq<T> implements Iterable<T> {
 
         function* select() {
             let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>,
+                iterValue: IteratorResult<T>,
                 index = 0;
 
             while (!(iterValue = iter.next()).done) {
@@ -816,7 +794,7 @@ export class Linq<T> implements Iterable<T> {
 
         function* selectMany() {
             let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>,
+                iterValue: IteratorResult<T>,
                 index = 0;
 
             while (!(iterValue = iter.next()).done) {
@@ -826,7 +804,7 @@ export class Linq<T> implements Iterable<T> {
                 }
                 else {
                     let iterChild: Iterator<T> = subCollection[Symbol.iterator](),
-                        iterChildValue: IteratorValue<T>;
+                        iterChildValue: IteratorResult<T>;
 
                     while (!(iterChildValue = iterChild.next()).done) {
                         yield iterChildValue.value;
@@ -847,7 +825,7 @@ export class Linq<T> implements Iterable<T> {
 
         function* skip() {
             let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>;
+                iterValue: IteratorResult<T>;
 
             while (!(iterValue = iter.next()).done) {
                 if (count > 0) {
@@ -871,7 +849,7 @@ export class Linq<T> implements Iterable<T> {
 
         function* skipWhile() {
             let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>,
+                iterValue: IteratorResult<T>,
                 skipping = true,
                 index = 0;
 
@@ -910,7 +888,7 @@ export class Linq<T> implements Iterable<T> {
         fieldSelector = fieldSelector || itemAsNumberSelector;
 
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+            iterValue: IteratorResult<T>,
             index = 0;
 
         while (!(iterValue = iter.next()).done) {
@@ -935,7 +913,7 @@ export class Linq<T> implements Iterable<T> {
 
         function* take() {
             let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>;
+                iterValue: IteratorResult<T>;
 
             while (!(iterValue = iter.next()).done) {
                 if (count > 0) {
@@ -957,7 +935,7 @@ export class Linq<T> implements Iterable<T> {
 
         function* takeWhile() {
             let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>,
+                iterValue: IteratorResult<T>,
                 taking = true,
                 index = 0;
 
@@ -980,7 +958,7 @@ export class Linq<T> implements Iterable<T> {
      */
     public toArray() : T[] {
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+            iterValue: IteratorResult<T>,
             result: T[] = [];
 
         while (!(iterValue = iter.next()).done) {
@@ -1010,7 +988,7 @@ export class Linq<T> implements Iterable<T> {
      */
     public toMap(keySelector: (item: T, index: number) => any, valueSelector?: (item: T, index: number) => any): Map<any, any> {
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+            iterValue: IteratorResult<T>,
             result = new Map<any, any>(),
             index = 0;
 
@@ -1048,7 +1026,7 @@ export class Linq<T> implements Iterable<T> {
      */
     public toObject<TKey extends string|number, TValue>(keySelector: (item: T, index: number) => TKey, valueSelector?: (item: T, index: number) => TValue) : {[index in TKey]: TValue} {
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+            iterValue: IteratorResult<T>,
             result: any = {},
             index = 0;
 
@@ -1066,7 +1044,7 @@ export class Linq<T> implements Iterable<T> {
      */
     public toSet(): Set<T> {
         let iter: Iterator<T> = this.getIter(),
-            iterValue: IteratorValue<T>,
+            iterValue: IteratorResult<T>,
             result = new Set<T>();
 
         while (!(iterValue = iter.next()).done) {
@@ -1088,7 +1066,7 @@ export class Linq<T> implements Iterable<T> {
 
         function* where() {
             let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorValue<T>,
+                iterValue: IteratorResult<T>,
                 index = 0;
 
             while (!(iterValue = iter.next()).done) {
@@ -1147,7 +1125,7 @@ class LinqOrdered<T> extends Linq<T> {
 
         // Output values
         let iter: Iterator<T> = sortedValues[Symbol.iterator](),
-            iterValue: IteratorValue<T>;
+            iterValue: IteratorResult<T>;
         while (!(iterValue = iter.next()).done) {
             yield iterValue.value;
         }

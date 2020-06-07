@@ -57,9 +57,11 @@ function itemAsSelfSelector(item) {
  * @param num The number to check the sign of
  */
 var getNumberSign = Math.sign || function (num) {
-    return num != 0
-        ? num / Math.abs(num)
-        : 0;
+    return num === 0
+        ? 0
+        : num > 0
+            ? 1
+            : -1;
 };
 /**
  * Used to represent any sequence of uniform values. Provides many helpful methods for manipulating that data.
