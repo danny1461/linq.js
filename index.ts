@@ -3,30 +3,6 @@
  * https://dandi.dev
  */
 
-/**
- * Describes an intermediate grouping value
- */
-export interface IGrouping<TKey, TGroup> {
-    key: TKey;
-    group: Iterable<TGroup>;
-}
-
-/**
- * Describes a record matching a key to a value
- */
-export interface IKeyValuePair<TKey, TValue> {
-    key: TKey;
-    value: TValue;
-}
-
-/**
- * Represents a step in an ordering operation
- */
-interface OrderingRecord<T> {
-    keySelector: (item: T) => any;
-    order: number;
-}
-
 function itemAsNumberSelector(item: any): number {
     return parseFloat(item);
 }
@@ -69,15 +45,15 @@ export class Linq<T> implements Iterable<T> {
      * 
      * @param generator The generator function to convert
      */
-    public static from<U>(generator: () => Generator<U, void, any>): Linq<U>;
+    public static from<U>(generator: () => Iterator<U>): Linq<U>;
     /**
      * Converts to the enumerable properties of an object into a key/value pair Linq object
      * 
      * @param obj The object whose enumerable properties to convert
      */
-    public static from(obj: object): Linq<IKeyValuePair<string, any>>;
+    public static from(obj: object): Linq<{key: string, value: any}>;
     /**
-     * Converts an iterable, generator function, or enumerable object into a Linq object. Enumerable objects will be of type Linq<IKeyValuePair<string, any>>
+     * Converts an iterable, generator function, or enumerable object into a Linq object. Enumerable objects will be of type Linq<{key: string, value: any}>
      * 
      * @param arg The value to convert
      */
@@ -92,7 +68,7 @@ export class Linq<T> implements Iterable<T> {
                 }
             };
 
-            return new Linq<IKeyValuePair<string, any>>(objectEnumerator);
+            return new Linq<any>(objectEnumerator);
         }
 
         return new Linq<any>(arg);
@@ -160,7 +136,7 @@ export class Linq<T> implements Iterable<T> {
      * 
      * @param generator The generator function providing the sequence values
      */
-    public constructor(generator: () => Generator<T, void, any>)
+    public constructor(generator: () => Iterator<T>)
     /**
      * Initializes a Linq object wrapping the provided data
      * 
@@ -176,7 +152,7 @@ export class Linq<T> implements Iterable<T> {
             }
         }
         else {
-            this.getIter = (<any>function*(){});
+            this.getIter = function*(){};
         }
     }
 
@@ -491,7 +467,7 @@ export class Linq<T> implements Iterable<T> {
      * 
      * @param keySelector A function to extract the key for each element
      */
-    public groupBy<TKey>(keySelector: (item: T, index: number) => TKey): Linq<IGrouping<TKey, T>>;
+    public groupBy<TKey>(keySelector: (item: T, index: number) => TKey): Linq<{key: TKey, group: T[]}>;
     /**
      * Groups the elements of a sequence according to a specified key selector function and creates a result value from each group and its key
      * 
@@ -511,7 +487,7 @@ export class Linq<T> implements Iterable<T> {
         function* groupBy() {
             let iter: Iterator<any> = that.getIter(),
                 iterValue: IteratorResult<any>,
-                groups = [],
+                groups: {key: any, group: any[]}[] = [],
                 index = 0;
 
             while (!(iterValue = iter.next()).done) {
@@ -526,7 +502,7 @@ export class Linq<T> implements Iterable<T> {
                     });
                 }
 
-                (<any>groups[ndx].group).push(iterValue.value);
+                groups[ndx].group.push(iterValue.value);
             }
 
             if (resultSelector) {
@@ -1080,6 +1056,14 @@ export class Linq<T> implements Iterable<T> {
     }
 }
 
+/**
+ * Represents a step in an ordering operation
+ */
+interface OrderingRecord<T> {
+    keySelector: (item: T) => any;
+    order: number;
+}
+
 class LinqOrdered<T> extends Linq<T> {
     /* Instance Members */
 
@@ -1100,7 +1084,7 @@ class LinqOrdered<T> extends Linq<T> {
             keySelector,
             order: ascending ? 1 : -1
         });
-        this.getIter = (<any>this.orderingFunc);
+        this.getIter = this.orderingFunc;
     }
 
     private *orderingFunc(): Generator<T, void, any> {

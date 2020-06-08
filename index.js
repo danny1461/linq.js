@@ -92,7 +92,7 @@ var Linq = /** @class */ (function () {
         }
     }
     /**
-     * Converts an iterable, generator function, or enumerable object into a Linq object. Enumerable objects will be of type Linq<IKeyValuePair<string, any>>
+     * Converts an iterable, generator function, or enumerable object into a Linq object. Enumerable objects will be of type Linq<{key: string, value: any}>
      *
      * @param arg The value to convert
      */
