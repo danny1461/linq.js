@@ -1154,7 +1154,7 @@ class LinqOrdered<T> extends Linq<T> {
      * 
      * @param keySelector A function to extract a key from each element
      */
-    public thenBy(keySelector: (item: T) => any): Linq<T> {
+    public thenBy(keySelector: (item: T) => any): LinqOrdered<T> {
         return new LinqOrdered(this.underlyingLinq, keySelector, true, this.ordering.slice(0));
     }
     /**
@@ -1162,7 +1162,7 @@ class LinqOrdered<T> extends Linq<T> {
      * 
      * @param keySelector A function to extract a key from each element
      */
-    public thenByDescending(keySelector: (item: T) => any): Linq<T> {
+    public thenByDescending(keySelector: (item: T) => any): LinqOrdered<T> {
         return new LinqOrdered(this.underlyingLinq, keySelector, false, this.ordering.slice(0));
     }
 }
