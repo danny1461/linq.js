@@ -98,34 +98,7 @@ var Linq = /** @class */ (function () {
      */
     Linq.from = function (arg) {
         if (typeof arg == 'object' && !arg[Symbol.iterator]) {
-            var objectEnumerator = function () {
-                var _a, _b, _i, i;
-                return __generator(this, function (_c) {
-                    switch (_c.label) {
-                        case 0:
-                            _a = [];
-                            for (_b in arg)
-                                _a.push(_b);
-                            _i = 0;
-                            _c.label = 1;
-                        case 1:
-                            if (!(_i < _a.length)) return [3 /*break*/, 4];
-                            i = _a[_i];
-                            return [4 /*yield*/, {
-                                    key: '' + i,
-                                    value: arg[i]
-                                }];
-                        case 2:
-                            _c.sent();
-                            _c.label = 3;
-                        case 3:
-                            _i++;
-                            return [3 /*break*/, 1];
-                        case 4: return [2 /*return*/];
-                    }
-                });
-            };
-            return new Linq(objectEnumerator);
+            return new Linq(function () { return Linq.Generators.objectEnumerator(arg); });
         }
         return new Linq(arg);
     };
@@ -141,54 +114,20 @@ var Linq = /** @class */ (function () {
         if (getNumberSign(max - min) != getNumberSign(step)) {
             throw 'Infinite loop detected';
         }
-        function range() {
-            var i, i;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!(max > min)) return [3 /*break*/, 5];
-                        i = min;
-                        _a.label = 1;
-                    case 1:
-                        if (!(i < max)) return [3 /*break*/, 4];
-                        return [4 /*yield*/, i];
-                    case 2:
-                        _a.sent();
-                        _a.label = 3;
-                    case 3:
-                        i += step;
-                        return [3 /*break*/, 1];
-                    case 4: return [3 /*break*/, 9];
-                    case 5:
-                        i = min;
-                        _a.label = 6;
-                    case 6:
-                        if (!(i > max)) return [3 /*break*/, 9];
-                        return [4 /*yield*/, i];
-                    case 7:
-                        _a.sent();
-                        _a.label = 8;
-                    case 8:
-                        i += step;
-                        return [3 /*break*/, 6];
-                    case 9: return [2 /*return*/];
-                }
-            });
-        }
-        return new Linq(range);
+        return new Linq(function () { return Linq.Generators.range(min, max, step); });
     };
     /**
-     * Generates a Linq object of a duplicated object in sequence
+     * Generates a Linq object of a specific length by the provided value or function returning a object
      *
-     * @param item The value to be duplicated
+     * @param item The value or function returning the value
      * @param count The number of times to duplicate the value
      */
     Linq.repeat = function (item, count) {
         if (count === void 0) { count = 1; }
-        var data = [];
-        data.length = count;
-        data.fill(item, 0);
-        return new Linq(data);
+        if (typeof item == 'function') {
+            return new Linq(function () { return Linq.Generators.repeat(item, count); });
+        }
+        return new Linq(function () { return Linq.Generators.repeat(function () { return item; }, count); });
     };
     /**
      * Returns the iterator for this Linq object
@@ -248,41 +187,12 @@ var Linq = /** @class */ (function () {
      * @param items The values to append to the end
      */
     Linq.prototype.append = function () {
+        var _this = this;
         var items = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             items[_i] = arguments[_i];
         }
-        var that = this;
-        function append() {
-            var iter, iterValue, i;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        iter = that.getIter();
-                        _a.label = 1;
-                    case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 3];
-                        return [4 /*yield*/, iterValue.value];
-                    case 2:
-                        _a.sent();
-                        return [3 /*break*/, 1];
-                    case 3:
-                        i = 0;
-                        _a.label = 4;
-                    case 4:
-                        if (!(i < items.length)) return [3 /*break*/, 7];
-                        return [4 /*yield*/, items[i]];
-                    case 5:
-                        _a.sent();
-                        _a.label = 6;
-                    case 6:
-                        i++;
-                        return [3 /*break*/, 4];
-                    case 7: return [2 /*return*/];
-                }
-            });
-        }
-        return new Linq(append);
+        return new Linq(function () { return Linq.Generators.append(_this.getIter, items); });
     };
     /**
      * Computes the average of a sequence of number values
@@ -308,45 +218,12 @@ var Linq = /** @class */ (function () {
      * @param items The iterable objects to concatenate
      */
     Linq.prototype.concat = function () {
+        var _this = this;
         var items = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             items[_i] = arguments[_i];
         }
-        var that = this;
-        function concatenated() {
-            var iter, iterValue, i;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        iter = that.getIter();
-                        _a.label = 1;
-                    case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 3];
-                        return [4 /*yield*/, iterValue.value];
-                    case 2:
-                        _a.sent();
-                        return [3 /*break*/, 1];
-                    case 3:
-                        i = 0;
-                        _a.label = 4;
-                    case 4:
-                        if (!(i < items.length)) return [3 /*break*/, 8];
-                        iter = items[i][Symbol.iterator]();
-                        _a.label = 5;
-                    case 5:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 7];
-                        return [4 /*yield*/, iterValue.value];
-                    case 6:
-                        _a.sent();
-                        return [3 /*break*/, 5];
-                    case 7:
-                        i++;
-                        return [3 /*break*/, 4];
-                    case 8: return [2 /*return*/];
-                }
-            });
-        }
-        return new Linq(concatenated);
+        return new Linq(function () { return Linq.Generators.concat(_this.getIter, items); });
     };
     /**
      * Determines whether a sequence contains a specified element by using the default equality comparer
@@ -383,31 +260,8 @@ var Linq = /** @class */ (function () {
      * @param fieldSelector If provided, the function to transform the element into a value for uniqueness checking
      */
     Linq.prototype.distinct = function (fieldSelector) {
-        var that = this;
-        function distinct() {
-            var distinct, iter, iterValue, index, distinctValue;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        distinct = [], iter = that.getIter(), index = 0;
-                        _a.label = 1;
-                    case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 4];
-                        distinctValue = fieldSelector
-                            ? fieldSelector(iterValue.value, index++)
-                            : iterValue.value;
-                        if (!(distinct.indexOf(distinctValue) < 0)) return [3 /*break*/, 3];
-                        distinct.push(distinctValue);
-                        return [4 /*yield*/, iterValue.value];
-                    case 2:
-                        _a.sent();
-                        _a.label = 3;
-                    case 3: return [3 /*break*/, 1];
-                    case 4: return [2 /*return*/];
-                }
-            });
-        }
-        return new Linq(distinct);
+        var _this = this;
+        return new Linq(function () { return Linq.Generators.distict(_this.getIter, fieldSelector); });
     };
     /**
      * Returns the element at a specified index in a sequence
@@ -448,45 +302,12 @@ var Linq = /** @class */ (function () {
      * @param resultSelector If provided, a function to create a result value from each group
      */
     Linq.prototype.groupBy = function (keySelector, resultSelector) {
-        var that = this;
-        function groupBy() {
-            var iter, iterValue, groups, index, _loop_1;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        iter = that.getIter(), groups = [], index = 0;
-                        _loop_1 = function () {
-                            var key = keySelector(iterValue.value, index++), ndx = groups.findIndex(function (i) { return i.key == key; });
-                            if (ndx < 0) {
-                                ndx = groups.length;
-                                groups.push({
-                                    key: key,
-                                    group: []
-                                });
-                            }
-                            groups[ndx].group.push(iterValue.value);
-                        };
-                        while (!(iterValue = iter.next()).done) {
-                            _loop_1();
-                        }
-                        if (resultSelector) {
-                            groups = groups.map(function (group) {
-                                return resultSelector(group.key, new Linq(group.group));
-                            });
-                        }
-                        iter = groups[Symbol.iterator]();
-                        _a.label = 1;
-                    case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 3];
-                        return [4 /*yield*/, iterValue.value];
-                    case 2:
-                        _a.sent();
-                        return [3 /*break*/, 1];
-                    case 3: return [2 /*return*/];
-                }
-            });
+        var _this = this;
+        var groupByIter = function () { return Linq.Generators.groupByKey(_this.getIter, keySelector); };
+        if (resultSelector) {
+            return new Linq(function () { return Linq.Generators.groupByKeyWithResult(groupByIter, resultSelector); });
         }
-        return new Linq(groupBy);
+        return new Linq(groupByIter);
     };
     Linq.prototype.groupJoin = function (inner, sourceSelector, innerSelector, resultSelector) {
         throw 'Not Implemented';
@@ -593,41 +414,12 @@ var Linq = /** @class */ (function () {
      * @param items The values to prepend to the front
      */
     Linq.prototype.prepend = function () {
+        var _this = this;
         var items = [];
         for (var _i = 0; _i < arguments.length; _i++) {
             items[_i] = arguments[_i];
         }
-        var that = this;
-        function prepend() {
-            var i, iter, iterValue;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        i = 0;
-                        _a.label = 1;
-                    case 1:
-                        if (!(i < items.length)) return [3 /*break*/, 4];
-                        return [4 /*yield*/, items[i]];
-                    case 2:
-                        _a.sent();
-                        _a.label = 3;
-                    case 3:
-                        i++;
-                        return [3 /*break*/, 1];
-                    case 4:
-                        iter = that.getIter();
-                        _a.label = 5;
-                    case 5:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 7];
-                        return [4 /*yield*/, iterValue.value];
-                    case 6:
-                        _a.sent();
-                        return [3 /*break*/, 5];
-                    case 7: return [2 /*return*/];
-                }
-            });
-        }
-        return new Linq(prepend);
+        return new Linq(function () { return Linq.Generators.prepend(_this.getIter, items); });
     };
     /**
      * Inverts the order of the elements in a sequence
@@ -646,64 +438,17 @@ var Linq = /** @class */ (function () {
      * @param selector A transform function to apply to each element
      */
     Linq.prototype.select = function (selector) {
-        var that = this;
-        function select() {
-            var iter, iterValue, index;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        iter = that.getIter(), index = 0;
-                        _a.label = 1;
-                    case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 3];
-                        return [4 /*yield*/, selector(iterValue.value, index++)];
-                    case 2:
-                        _a.sent();
-                        return [3 /*break*/, 1];
-                    case 3: return [2 /*return*/];
-                }
-            });
-        }
-        return new Linq(select);
+        var _this = this;
+        return new Linq(function () { return Linq.Generators.select(_this.getIter, selector); });
     };
     /**
      * Projects each element of a sequence to an Iterable<T> and flattens the resulting sequences into one sequence
      *
-     * @param itemsSelector A transform function to apply to each element of the input sequence
-     * @param resultSelector If provided, a transform function to apply to each element of the intermediate sequence
+     * @param collectionSelector A transform function to apply to each element
      */
-    Linq.prototype.selectMany = function (itemsSelector, resultSelector) {
-        var that = this;
-        function selectMany() {
-            var iter, iterValue, index, subCollection, iterChild, iterChildValue;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        iter = that.getIter(), index = 0;
-                        _a.label = 1;
-                    case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 7];
-                        subCollection = itemsSelector(iterValue.value, index++);
-                        if (!resultSelector) return [3 /*break*/, 3];
-                        return [4 /*yield*/, resultSelector(iterValue.value, subCollection)];
-                    case 2:
-                        _a.sent();
-                        return [3 /*break*/, 6];
-                    case 3:
-                        iterChild = subCollection[Symbol.iterator](), iterChildValue = void 0;
-                        _a.label = 4;
-                    case 4:
-                        if (!!(iterChildValue = iterChild.next()).done) return [3 /*break*/, 6];
-                        return [4 /*yield*/, iterChildValue.value];
-                    case 5:
-                        _a.sent();
-                        return [3 /*break*/, 4];
-                    case 6: return [3 /*break*/, 1];
-                    case 7: return [2 /*return*/];
-                }
-            });
-        }
-        return new Linq(selectMany);
+    Linq.prototype.selectMany = function (collectionSelector) {
+        var _this = this;
+        return new Linq(function () { return Linq.Generators.selectMany(_this.getIter, collectionSelector); });
     };
     /**
      * Bypasses a specified number of elements in a sequence and then returns the remaining elements
@@ -711,29 +456,8 @@ var Linq = /** @class */ (function () {
      * @param count The number of elements to skip before returning the remaining elements
      */
     Linq.prototype.skip = function (count) {
-        var that = this;
-        function skip() {
-            var iter, iterValue;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        iter = that.getIter();
-                        _a.label = 1;
-                    case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 5];
-                        if (!(count > 0)) return [3 /*break*/, 2];
-                        count--;
-                        return [3 /*break*/, 4];
-                    case 2: return [4 /*yield*/, iterValue.value];
-                    case 3:
-                        _a.sent();
-                        _a.label = 4;
-                    case 4: return [3 /*break*/, 1];
-                    case 5: return [2 /*return*/];
-                }
-            });
-        }
-        return new Linq(skip);
+        var _this = this;
+        return new Linq(function () { return Linq.Generators.skip(_this.getIter, count); });
     };
     /**
      * Bypasses elements in a sequence as long as a specified condition is true and then returns the remaining elements
@@ -741,33 +465,8 @@ var Linq = /** @class */ (function () {
      * @param predicate A function to test each element for a condition
      */
     Linq.prototype.skipWhile = function (predicate) {
-        var that = this;
-        function skipWhile() {
-            var iter, iterValue, skipping, index;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        iter = that.getIter(), skipping = true, index = 0;
-                        _a.label = 1;
-                    case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 3];
-                        if (skipping) {
-                            if (predicate(iterValue.value, index++)) {
-                                return [3 /*break*/, 1];
-                            }
-                            else {
-                                skipping = false;
-                            }
-                        }
-                        return [4 /*yield*/, iterValue.value];
-                    case 2:
-                        _a.sent();
-                        return [3 /*break*/, 1];
-                    case 3: return [2 /*return*/];
-                }
-            });
-        }
-        return new Linq(skipWhile);
+        var _this = this;
+        return new Linq(function () { return Linq.Generators.skipWhile(_this.getIter, predicate); });
     };
     /**
      * Computes the sum of a sequence
@@ -792,28 +491,8 @@ var Linq = /** @class */ (function () {
      * @param count The number of elements to return
      */
     Linq.prototype.take = function (count) {
-        var that = this;
-        function take() {
-            var iter, iterValue;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        iter = that.getIter();
-                        _a.label = 1;
-                    case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 4];
-                        if (!(count > 0)) return [3 /*break*/, 3];
-                        return [4 /*yield*/, iterValue.value];
-                    case 2:
-                        _a.sent();
-                        count--;
-                        _a.label = 3;
-                    case 3: return [3 /*break*/, 1];
-                    case 4: return [2 /*return*/];
-                }
-            });
-        }
-        return new Linq(take);
+        var _this = this;
+        return new Linq(function () { return Linq.Generators.take(_this.getIter, count); });
     };
     /**
      * Returns elements from a sequence as long as a specified condition is true
@@ -821,31 +500,8 @@ var Linq = /** @class */ (function () {
      * @param predicate A function to test each element for a condition
      */
     Linq.prototype.takeWhile = function (predicate) {
-        var that = this;
-        function takeWhile() {
-            var iter, iterValue, taking, index;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        iter = that.getIter(), taking = true, index = 0;
-                        _a.label = 1;
-                    case 1:
-                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 5];
-                        if (!taking) return [3 /*break*/, 4];
-                        if (!predicate(iterValue.value, index++)) return [3 /*break*/, 3];
-                        return [4 /*yield*/, iterValue.value];
-                    case 2:
-                        _a.sent();
-                        return [3 /*break*/, 4];
-                    case 3:
-                        taking = false;
-                        _a.label = 4;
-                    case 4: return [3 /*break*/, 1];
-                    case 5: return [2 /*return*/];
-                }
-            });
-        }
-        return new Linq(takeWhile);
+        var _this = this;
+        return new Linq(function () { return Linq.Generators.takeWhile(_this.getIter, predicate); });
     };
     /**
      * Creates an array from a the sequence
@@ -930,6 +586,368 @@ var Linq = /** @class */ (function () {
         }
         return new Linq(where);
     };
+    /* Static Members */
+    Linq.Generators = /** @class */ (function () {
+        function class_1() {
+        }
+        class_1.objectEnumerator = function (obj) {
+            var _a, _b, _i, i;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
+                    case 0:
+                        _a = [];
+                        for (_b in obj)
+                            _a.push(_b);
+                        _i = 0;
+                        _c.label = 1;
+                    case 1:
+                        if (!(_i < _a.length)) return [3 /*break*/, 4];
+                        i = _a[_i];
+                        return [4 /*yield*/, {
+                                key: '' + i,
+                                value: obj[i]
+                            }];
+                    case 2:
+                        _c.sent();
+                        _c.label = 3;
+                    case 3:
+                        _i++;
+                        return [3 /*break*/, 1];
+                    case 4: return [2 /*return*/];
+                }
+            });
+        };
+        class_1.range = function (min, max, step) {
+            var i, i;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!(max > min)) return [3 /*break*/, 5];
+                        i = min;
+                        _a.label = 1;
+                    case 1:
+                        if (!(i < max)) return [3 /*break*/, 4];
+                        return [4 /*yield*/, i];
+                    case 2:
+                        _a.sent();
+                        _a.label = 3;
+                    case 3:
+                        i += step;
+                        return [3 /*break*/, 1];
+                    case 4: return [3 /*break*/, 9];
+                    case 5:
+                        i = min;
+                        _a.label = 6;
+                    case 6:
+                        if (!(i > max)) return [3 /*break*/, 9];
+                        return [4 /*yield*/, i];
+                    case 7:
+                        _a.sent();
+                        _a.label = 8;
+                    case 8:
+                        i += step;
+                        return [3 /*break*/, 6];
+                    case 9: return [2 /*return*/];
+                }
+            });
+        };
+        class_1.repeat = function (func, count) {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!(count-- > 0)) return [3 /*break*/, 2];
+                        return [4 /*yield*/, func()];
+                    case 1:
+                        _a.sent();
+                        return [3 /*break*/, 0];
+                    case 2: return [2 /*return*/];
+                }
+            });
+        };
+        class_1.append = function (getIter, items) {
+            var iter, iterValue, i;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        iter = getIter();
+                        _a.label = 1;
+                    case 1:
+                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 3];
+                        return [4 /*yield*/, iterValue.value];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3:
+                        i = 0;
+                        _a.label = 4;
+                    case 4:
+                        if (!(i < items.length)) return [3 /*break*/, 7];
+                        return [4 /*yield*/, items[i]];
+                    case 5:
+                        _a.sent();
+                        _a.label = 6;
+                    case 6:
+                        i++;
+                        return [3 /*break*/, 4];
+                    case 7: return [2 /*return*/];
+                }
+            });
+        };
+        class_1.concat = function (getIter, items) {
+            var iter, iterValue, i;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        iter = getIter();
+                        _a.label = 1;
+                    case 1:
+                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 3];
+                        return [4 /*yield*/, iterValue.value];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3:
+                        i = 0;
+                        _a.label = 4;
+                    case 4:
+                        if (!(i < items.length)) return [3 /*break*/, 8];
+                        iter = items[i][Symbol.iterator]();
+                        _a.label = 5;
+                    case 5:
+                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 7];
+                        return [4 /*yield*/, iterValue.value];
+                    case 6:
+                        _a.sent();
+                        return [3 /*break*/, 5];
+                    case 7:
+                        i++;
+                        return [3 /*break*/, 4];
+                    case 8: return [2 /*return*/];
+                }
+            });
+        };
+        class_1.distict = function (getIter, fieldSelector) {
+            var distinct, iter, iterValue, index, distinctValue;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        distinct = new Set(), iter = getIter(), index = 0;
+                        _a.label = 1;
+                    case 1:
+                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 4];
+                        distinctValue = fieldSelector
+                            ? fieldSelector(iterValue.value, index++)
+                            : iterValue.value;
+                        if (!!distinct.has(distinctValue)) return [3 /*break*/, 3];
+                        distinct.add(distinctValue);
+                        return [4 /*yield*/, iterValue.value];
+                    case 2:
+                        _a.sent();
+                        _a.label = 3;
+                    case 3: return [3 /*break*/, 1];
+                    case 4: return [2 /*return*/];
+                }
+            });
+        };
+        class_1.groupByKey = function (getIter, keySelector) {
+            var iter, iterValue, groups, index, key, group, groupsIter;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        iter = getIter(), groups = new Map(), index = 0;
+                        while (!(iterValue = iter.next()).done) {
+                            key = keySelector(iterValue.value, index++), group = groups.get(key);
+                            if (!group) {
+                                groups.set(key, group = []);
+                            }
+                            group.push(iterValue.value);
+                        }
+                        groupsIter = groups.keys();
+                        _a.label = 1;
+                    case 1:
+                        if (!!(iterValue = groupsIter.next()).done) return [3 /*break*/, 3];
+                        return [4 /*yield*/, {
+                                key: iterValue.value,
+                                group: groups.get(iterValue.value)
+                            }];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3: return [2 /*return*/];
+                }
+            });
+        };
+        class_1.groupByKeyWithResult = function (getIter, resultSelector) {
+            var iter, iterValue;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        iter = getIter();
+                        _a.label = 1;
+                    case 1:
+                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 3];
+                        return [4 /*yield*/, resultSelector(iterValue.value.key, new Linq(iterValue.value.group))];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3: return [2 /*return*/];
+                }
+            });
+        };
+        class_1.prepend = function (getIter, items) {
+            var i, iter, iterValue;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        i = 0;
+                        _a.label = 1;
+                    case 1:
+                        if (!(i < items.length)) return [3 /*break*/, 4];
+                        return [4 /*yield*/, items[i]];
+                    case 2:
+                        _a.sent();
+                        _a.label = 3;
+                    case 3:
+                        i++;
+                        return [3 /*break*/, 1];
+                    case 4:
+                        iter = getIter();
+                        _a.label = 5;
+                    case 5:
+                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 7];
+                        return [4 /*yield*/, iterValue.value];
+                    case 6:
+                        _a.sent();
+                        return [3 /*break*/, 5];
+                    case 7: return [2 /*return*/];
+                }
+            });
+        };
+        class_1.select = function (getIter, selector) {
+            var iter, iterValue, index;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        iter = getIter(), index = 0;
+                        _a.label = 1;
+                    case 1:
+                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 3];
+                        return [4 /*yield*/, selector(iterValue.value, index++)];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3: return [2 /*return*/];
+                }
+            });
+        };
+        class_1.selectMany = function (getIter, collectionSelector) {
+            var iter, iterValue, index, subCollection, iterChild, iterChildValue;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        iter = getIter(), index = 0;
+                        _a.label = 1;
+                    case 1:
+                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 5];
+                        subCollection = collectionSelector(iterValue.value, index++), iterChild = subCollection[Symbol.iterator](), iterChildValue = void 0;
+                        _a.label = 2;
+                    case 2:
+                        if (!!(iterChildValue = iterChild.next()).done) return [3 /*break*/, 4];
+                        return [4 /*yield*/, iterChildValue.value];
+                    case 3:
+                        _a.sent();
+                        return [3 /*break*/, 2];
+                    case 4: return [3 /*break*/, 1];
+                    case 5: return [2 /*return*/];
+                }
+            });
+        };
+        class_1.skip = function (getIter, count) {
+            var iter, iterValue;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        iter = getIter();
+                        _a.label = 1;
+                    case 1:
+                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 5];
+                        if (!(count > 0)) return [3 /*break*/, 2];
+                        count--;
+                        return [3 /*break*/, 4];
+                    case 2: return [4 /*yield*/, iterValue.value];
+                    case 3:
+                        _a.sent();
+                        _a.label = 4;
+                    case 4: return [3 /*break*/, 1];
+                    case 5: return [2 /*return*/];
+                }
+            });
+        };
+        class_1.skipWhile = function (getIter, predicate) {
+            var iter, iterValue, skipping, index;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        iter = getIter(), skipping = true, index = 0;
+                        _a.label = 1;
+                    case 1:
+                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 3];
+                        if (skipping) {
+                            if (predicate(iterValue.value, index++)) {
+                                return [3 /*break*/, 1];
+                            }
+                            else {
+                                skipping = false;
+                            }
+                        }
+                        return [4 /*yield*/, iterValue.value];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 1];
+                    case 3: return [2 /*return*/];
+                }
+            });
+        };
+        class_1.take = function (getIter, count) {
+            var iter, iterValue;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        iter = getIter();
+                        _a.label = 1;
+                    case 1:
+                        if (!(count > 0 && !(iterValue = iter.next()).done)) return [3 /*break*/, 3];
+                        return [4 /*yield*/, iterValue.value];
+                    case 2:
+                        _a.sent();
+                        count--;
+                        return [3 /*break*/, 1];
+                    case 3: return [2 /*return*/];
+                }
+            });
+        };
+        class_1.takeWhile = function (getIter, predicate) {
+            var iter, iterValue, index;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        iter = getIter(), index = 0;
+                        _a.label = 1;
+                    case 1:
+                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 5];
+                        if (!predicate(iterValue.value, index++)) return [3 /*break*/, 3];
+                        return [4 /*yield*/, iterValue.value];
+                    case 2:
+                        _a.sent();
+                        return [3 /*break*/, 4];
+                    case 3: return [3 /*break*/, 5];
+                    case 4: return [3 /*break*/, 1];
+                    case 5: return [2 /*return*/];
+                }
+            });
+        };
+        return class_1;
+    }());
     return Linq;
 }());
 exports.Linq = Linq;
@@ -950,36 +968,22 @@ var LinqOrdered = /** @class */ (function (_super) {
         return _this;
     }
     LinqOrdered.prototype.orderingFunc = function () {
-        var sortedValues, iter, iterValue;
         var _this = this;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    sortedValues = this.underlyingLinq.toArray();
-                    // Sorting processes
-                    sortedValues.sort(function (a, b) {
-                        for (var i = 0; i < _this.ordering.length; i++) {
-                            var fieldA = _this.ordering[i].keySelector(a), fieldB = _this.ordering[i].keySelector(b);
-                            if (fieldA < fieldB) {
-                                return -1 * _this.ordering[i].order;
-                            }
-                            else if (fieldA > fieldB) {
-                                return 1 * _this.ordering[i].order;
-                            }
-                        }
-                        return 0;
-                    });
-                    iter = sortedValues[Symbol.iterator]();
-                    _a.label = 1;
-                case 1:
-                    if (!!(iterValue = iter.next()).done) return [3 /*break*/, 3];
-                    return [4 /*yield*/, iterValue.value];
-                case 2:
-                    _a.sent();
-                    return [3 /*break*/, 1];
-                case 3: return [2 /*return*/];
+        var sortedValues = this.underlyingLinq.toArray();
+        // Sorting processes
+        sortedValues.sort(function (a, b) {
+            for (var i = 0; i < _this.ordering.length; i++) {
+                var fieldA = _this.ordering[i].keySelector(a), fieldB = _this.ordering[i].keySelector(b);
+                if (fieldA < fieldB) {
+                    return -1 * _this.ordering[i].order;
+                }
+                else if (fieldA > fieldB) {
+                    return 1 * _this.ordering[i].order;
+                }
             }
+            return 0;
         });
+        return sortedValues[Symbol.iterator]();
     };
     /* Overrides */
     /**

@@ -34,6 +34,215 @@ let getNumberSign = Math.sign || function(num: number): number {
 export class Linq<T> implements Iterable<T> {
     /* Static Members */
 
+    static Generators = class {
+        public static *objectEnumerator(obj: any): Iterator<{key: string, value: any}> {
+            for (let i in obj) {
+                yield {
+                    key: '' + i,
+                    value: obj[i]
+                };
+            }
+        }
+
+        public static *range(min: number, max: number, step: number): Iterator<number> {
+            if (max > min) {
+                for (let i = min; i < max; i += step) {
+                    yield i;
+                }
+            }
+            else {
+                for (let i = min; i > max; i += step) {
+                    yield i;
+                }
+            }
+        }
+
+        public static *repeat<U>(func: () => U, count: number): Iterator<U> {
+            while (count-- > 0) {
+                yield func();
+            }
+        }
+
+        public static *append<U>(getIter: () => Iterator<U>, items: U[]): Iterator<U> {
+            let iter = getIter(),
+                iterValue: IteratorResult<U>;
+
+            while (!(iterValue = iter.next()).done) {
+                yield iterValue.value;
+            }
+
+            for (let i = 0; i < items.length; i++) {
+                yield items[i];
+            }
+        }
+
+        public static *concat<U>(getIter: () => Iterator<U>, items: Iterable<U>[]): Iterator<U> {
+            let iter = getIter(),
+                iterValue: IteratorResult<U>;
+            while (!(iterValue = iter.next()).done) {
+                yield iterValue.value;
+            }
+
+            for (let i = 0; i < items.length; i++) {
+                iter = items[i][Symbol.iterator]();
+                while (!(iterValue = iter.next()).done) {
+                    yield iterValue.value;
+                }
+            }
+        }
+
+        public static *distict<U>(getIter: () => Iterator<U>, fieldSelector?: (item: U, index: number) => any): Iterator<U> {
+            let distinct = new Set<any>(),
+                iter = getIter(),
+                iterValue: IteratorResult<U>,
+                index = 0;
+
+            while (!(iterValue = iter.next()).done) {
+                let distinctValue = fieldSelector
+                    ? fieldSelector(iterValue.value, index++)
+                    : iterValue.value;
+
+                if (!distinct.has(distinctValue)) {
+                    distinct.add(distinctValue);
+                    yield iterValue.value;
+                }
+            }
+        }
+
+        public static *groupByKey<U, UKey>(getIter: () => Iterator<U>, keySelector: (item: U, index: number) => UKey): Iterator<{key: UKey, group: U[]}> {
+            let iter = getIter(),
+                iterValue: IteratorResult<any>,
+                groups = new Map<UKey, U[]>(),
+                index = 0;
+
+            while (!(iterValue = iter.next()).done) {
+                let key = keySelector(iterValue.value, index++),
+                    group = groups.get(key);
+
+                if (!group) {
+                    groups.set(key, group = []);
+                }
+
+                group.push(iterValue.value);
+            }
+
+            let groupsIter = groups.keys();
+            while (!(iterValue = groupsIter.next()).done) {
+                yield {
+                    key: iterValue.value,
+                    group: <U[]>groups.get(iterValue.value)
+                };
+            }
+        }
+
+        public static *groupByKeyWithResult<U, UKey, UResult>(getIter: () => Iterator<{key: UKey, group: U[]}>, resultSelector: (key: UKey, items: Linq<U>) => UResult): Iterator<UResult> {
+            let iter = getIter(),
+                iterValue: IteratorResult<any>;
+
+            while (!(iterValue = iter.next()).done) {
+                yield resultSelector(iterValue.value.key, new Linq<U>(iterValue.value.group));
+            }
+        }
+
+        public static *prepend<U>(getIter: () => Iterator<U>, items: U[]): Iterator<U> {
+            for (let i = 0; i < items.length; i++) {
+                yield items[i];
+            }
+
+            let iter = getIter(),
+                iterValue: IteratorResult<U>;
+
+            while (!(iterValue = iter.next()).done) {
+                yield iterValue.value;
+            }
+        }
+
+        public static *select<U, UResult>(getIter: () => Iterator<U>, selector: (item: U, index: number) => UResult): Iterator<UResult> {
+            let iter = getIter(),
+                iterValue: IteratorResult<U>,
+                index = 0;
+
+            while (!(iterValue = iter.next()).done) {
+                yield selector(iterValue.value, index++);
+            }
+        }
+
+        public static *selectMany<U, TResult>(getIter: () => Iterator<U>, collectionSelector: (item: U, index: number) => Iterable<TResult>): Iterator<TResult> {
+            let iter = getIter(),
+                iterValue: IteratorResult<any>,
+                index = 0;
+
+            while (!(iterValue = iter.next()).done) {
+                let subCollection = collectionSelector(iterValue.value, index++),
+                    iterChild = subCollection[Symbol.iterator](),
+                    iterChildValue: IteratorResult<TResult>;
+
+                while (!(iterChildValue = iterChild.next()).done) {
+                    yield iterChildValue.value;
+                }
+            }
+        }
+
+        public static *skip<U>(getIter: () => Iterator<U>, count: number): Iterator<U> {
+            let iter = getIter(),
+                iterValue: IteratorResult<U>;
+
+            while (!(iterValue = iter.next()).done) {
+                if (count > 0) {
+                    count--;
+                }
+                else {
+                    yield iterValue.value;
+                }
+            }
+        }
+
+        public static *skipWhile<U>(getIter: () => Iterator<U>, predicate: (item: U, index: number) => boolean): Iterator<U> {
+            let iter = getIter(),
+                iterValue: IteratorResult<U>,
+                skipping = true,
+                index = 0;
+
+            while (!(iterValue = iter.next()).done) {
+                if (skipping) {
+                    if (predicate(iterValue.value, index++)) {
+                        continue;
+                    }
+                    else {
+                        skipping = false;
+                    }
+                }
+
+                yield iterValue.value;
+            }
+        }
+
+        public static *take<U>(getIter: () => Iterator<U>, count: number): Iterator<U> {
+            let iter = getIter(),
+                iterValue: IteratorResult<U>;
+
+            while (count > 0 && !(iterValue = iter.next()).done) {
+                yield iterValue.value;
+                count--;
+            }
+        }
+
+        public static *takeWhile<U>(getIter: () => Iterator<U>, predicate: (item: U, index: number) => boolean): Iterator<U> {
+            let iter = getIter(),
+                iterValue: IteratorResult<U>,
+                index = 0;
+
+            while (!(iterValue = iter.next()).done) {
+                if (predicate(iterValue.value, index++)) {
+                    yield iterValue.value;
+                }
+                else {
+                    break;
+                }
+            }
+        }
+    }
+
     /**
      * Converts an iterable value into a Linq object. An alias for `new Linq<T>(iter)`
      * 
@@ -59,16 +268,7 @@ export class Linq<T> implements Iterable<T> {
      */
     public static from(arg: any): Linq<any> {
         if (typeof arg == 'object' && !arg[Symbol.iterator]) {
-            let objectEnumerator = function*() {
-                for (let i in arg) {
-                    yield {
-                        key: '' + i,
-                        value: arg[i]
-                    };
-                }
-            };
-
-            return new Linq<any>(objectEnumerator);
+            return new Linq<any>(() => Linq.Generators.objectEnumerator(arg));
         }
 
         return new Linq<any>(arg);
@@ -85,20 +285,7 @@ export class Linq<T> implements Iterable<T> {
             throw 'Infinite loop detected';
         }
 
-        function* range() {
-            if (max > min) {
-                for (let i = min; i < max; i += step) {
-                    yield i;
-                }
-            }
-            else {
-                for (let i = min; i > max; i += step) {
-                    yield i;
-                }
-            }
-        }
-
-        return new Linq<number>(range);
+        return new Linq(() => Linq.Generators.range(min, max, step));
     }
     /**
      * Generates a Linq object of a duplicated object in sequence
@@ -106,12 +293,26 @@ export class Linq<T> implements Iterable<T> {
      * @param item The value to be duplicated
      * @param count The number of times to duplicate the value
      */
-    public static repeat<U>(item: U, count: number = 1): Linq<U> {
-        let data: U[] = [];
-        data.length = count;
-        data.fill(item, 0);
+    public static repeat<U>(item: U, count: number): Linq<U>;
+    /**
+     * Generates a Linq object of a specific length by invoking a method
+     * 
+     * @param func The method used to generate the values
+     * @param count The number of times to call the method
+     */
+    public static repeat<U>(func: () => U, count: number): Linq<U>;
+    /**
+     * Generates a Linq object of a specific length by the provided value or function returning a object
+     * 
+     * @param item The value or function returning the value
+     * @param count The number of times to duplicate the value
+     */
+    public static repeat(item: any, count: number = 1): Linq<any> {
+        if (typeof item == 'function') {
+            return new Linq<any>(() => Linq.Generators.repeat(item, count));
+        }
 
-        return new Linq<U>(data);
+        return new Linq<any>(() => Linq.Generators.repeat(() => item, count));
     }
 
     /* Instance Members */
@@ -250,22 +451,7 @@ export class Linq<T> implements Iterable<T> {
      * @param items The values to append to the end
      */
     public append(...items: T[]): Linq<T> {
-        let that = this;
-
-        function* append() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorResult<T>;
-
-            while (!(iterValue = iter.next()).done) {
-                yield iterValue.value;
-            }
-
-            for (let i = 0; i < items.length; i++) {
-                yield items[i];
-            }
-        }
-
-        return new Linq<T>(append);
+        return new Linq<T>(() => Linq.Generators.append(this.getIter, items));
     }
     /**
      * Computes the average of a sequence of number values
@@ -309,24 +495,7 @@ export class Linq<T> implements Iterable<T> {
      * @param items The iterable objects to concatenate
      */
     public concat(...items: Iterable<T>[]): Linq<T> {
-        let that = this;
-
-        function* concatenated() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorResult<T>;
-            while (!(iterValue = iter.next()).done) {
-                yield iterValue.value;
-            }
-
-            for (let i = 0; i < items.length; i++) {
-                iter = items[i][Symbol.iterator]();
-                while (!(iterValue = iter.next()).done) {
-                    yield iterValue.value;
-                }
-            }
-        }
-
-        return new Linq<T>(concatenated);
+        return new Linq<T>(() => Linq.Generators.concat(this.getIter, items));
     }
     /**
      * Determines whether a sequence contains a specified element by using the default equality comparer
@@ -392,27 +561,7 @@ export class Linq<T> implements Iterable<T> {
      * @param fieldSelector If provided, the function to transform the element into a value for uniqueness checking
      */
     public distinct(fieldSelector?: (item: T, index: number) => any): Linq<T> {
-        let that = this;
-
-        function* distinct() {
-            let distinct: any[] = [],
-                iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorResult<T>,
-                index = 0;
-
-            while (!(iterValue = iter.next()).done) {
-                let distinctValue = fieldSelector
-                    ? fieldSelector(iterValue.value, index++)
-                    : iterValue.value;
-
-                if (distinct.indexOf(distinctValue) < 0) {
-                    distinct.push(distinctValue);
-                    yield iterValue.value;
-                }
-            }
-        }
-
-        return new Linq(distinct);
+        return new Linq<T>(() => Linq.Generators.distict(this.getIter, fieldSelector));
     }
     /**
      * Returns the element at a specified index in a sequence
@@ -481,43 +630,14 @@ export class Linq<T> implements Iterable<T> {
      * @param keySelector A function to extract the key for each element
      * @param resultSelector If provided, a function to create a result value from each group
      */
-    public groupBy(keySelector: Function, resultSelector?: Function) {
-        let that = this;
+    public groupBy<TKey, TResult>(keySelector: (item: T, index: number) => TKey, resultSelector?: (key: TKey, items: Linq<T>) => TResult): Linq<any> {
+        let groupByIter = () => Linq.Generators.groupByKey(this.getIter, keySelector);
 
-        function* groupBy() {
-            let iter: Iterator<any> = that.getIter(),
-                iterValue: IteratorResult<any>,
-                groups: {key: any, group: any[]}[] = [],
-                index = 0;
-
-            while (!(iterValue = iter.next()).done) {
-                let key = keySelector(iterValue.value, index++),
-                    ndx = groups.findIndex(i => i.key == key);
-                
-                if (ndx < 0) {
-                    ndx = groups.length;
-                    groups.push({
-                        key,
-                        group: []
-                    });
-                }
-
-                groups[ndx].group.push(iterValue.value);
-            }
-
-            if (resultSelector) {
-                groups = groups.map(group => {
-                    return resultSelector(group.key, new Linq<T>(group.group));
-                });
-            }
-
-            iter = groups[Symbol.iterator]();
-            while (!(iterValue = iter.next()).done) {
-                yield iterValue.value;
-            }
+        if (resultSelector) {
+            return new Linq<TResult>(() => Linq.Generators.groupByKeyWithResult(groupByIter, resultSelector));
         }
-        
-        return new Linq(groupBy);
+
+        return new Linq<{key: TKey, group: T[]}>(groupByIter);
     }
     public groupJoin<TInner, TKey, TResult>(inner: Linq<TInner>, sourceSelector: (item: T, index: number) => TKey, innerSelector: (item: TInner, index: number) => TKey, resultSelector: (source: T, items: Linq<TInner>) => TResult): Linq<TResult> {
         throw 'Not Implemented';
@@ -694,22 +814,7 @@ export class Linq<T> implements Iterable<T> {
      * @param items The values to prepend to the front
      */
     public prepend(...items: T[]): Linq<T> {
-        let that = this;
-
-        function* prepend() {
-            for (let i = 0; i < items.length; i++) {
-                yield items[i];
-            }
-
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorResult<T>;
-
-            while (!(iterValue = iter.next()).done) {
-                yield iterValue.value;
-            }
-        }
-
-        return new Linq<T>(prepend);
+        return new Linq<T>(() => Linq.Generators.prepend(this.getIter, items));
     }
     /**
      * Inverts the order of the elements in a sequence
@@ -732,64 +837,15 @@ export class Linq<T> implements Iterable<T> {
      * @param selector A transform function to apply to each element
      */
     public select<TResult>(selector: (item: T, index: number) => TResult): Linq<TResult> {
-        let that = this;
-
-        function* select() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorResult<T>,
-                index = 0;
-
-            while (!(iterValue = iter.next()).done) {
-                yield selector(iterValue.value, index++);
-            }
-        }
-
-        return new Linq<TResult>(select);
+        return new Linq<TResult>(() => Linq.Generators.select(this.getIter, selector));
     }
     /**
      * Projects each element of a sequence to an Iterable<T> and flattens the resulting sequences into one sequence
      * 
-     * @param itemsSelector A transform function to apply to each element
+     * @param collectionSelector A transform function to apply to each element
      */
-    public selectMany<TResult>(itemsSelector: (item: T, index: number) => Iterable<TResult>): Linq<TResult>;
-    /**
-     * Projects each element of a sequence to an Iterable<T>, flattens the resulting sequences into one sequence, and invokes a result selector function on each element therein
-     * 
-     * @param itemsSelector A transform function to apply to each element of the input sequence
-     * @param resultSelector A transform function to apply to each element of the intermediate sequence
-     */
-    public selectMany<TCollection, TResult>(itemsSelector: (item: T, index: number) => Iterable<TCollection>, resultSelector: (item: T, subCollection: Iterable<TCollection>) => TResult): Linq<TResult>;
-    /**
-     * Projects each element of a sequence to an Iterable<T> and flattens the resulting sequences into one sequence
-     * 
-     * @param itemsSelector A transform function to apply to each element of the input sequence
-     * @param resultSelector If provided, a transform function to apply to each element of the intermediate sequence
-     */
-    public selectMany(itemsSelector: (item: T, index: number) => any, resultSelector?: (item: T, subCollection: any) => any): any {
-        let that = this;
-
-        function* selectMany() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorResult<T>,
-                index = 0;
-
-            while (!(iterValue = iter.next()).done) {
-                let subCollection = itemsSelector(iterValue.value, index++);
-                if (resultSelector) {
-                    yield resultSelector(iterValue.value, subCollection);
-                }
-                else {
-                    let iterChild: Iterator<T> = subCollection[Symbol.iterator](),
-                        iterChildValue: IteratorResult<T>;
-
-                    while (!(iterChildValue = iterChild.next()).done) {
-                        yield iterChildValue.value;
-                    }
-                }
-            }
-        }
-
-        return new Linq(selectMany);
+    public selectMany<TResult>(collectionSelector: (item: T, index: number) => Iterable<TResult>): Linq<TResult> {
+        return new Linq<TResult>(() => Linq.Generators.selectMany(this.getIter, collectionSelector));
     }
     /**
      * Bypasses a specified number of elements in a sequence and then returns the remaining elements
@@ -797,23 +853,7 @@ export class Linq<T> implements Iterable<T> {
      * @param count The number of elements to skip before returning the remaining elements
      */
     public skip(count: number): Linq<T> {
-        let that = this;
-
-        function* skip() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorResult<T>;
-
-            while (!(iterValue = iter.next()).done) {
-                if (count > 0) {
-                    count--;
-                }
-                else {
-                    yield iterValue.value;
-                }
-            }
-        }
-
-        return new Linq<T>(skip);
+        return new Linq<T>(() => Linq.Generators.skip(this.getIter, count));
     }
     /**
      * Bypasses elements in a sequence as long as a specified condition is true and then returns the remaining elements
@@ -821,29 +861,7 @@ export class Linq<T> implements Iterable<T> {
      * @param predicate A function to test each element for a condition
      */
     public skipWhile(predicate: (item: T, index: number) => boolean): Linq<T> {
-        let that = this;
-
-        function* skipWhile() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorResult<T>,
-                skipping = true,
-                index = 0;
-
-            while (!(iterValue = iter.next()).done) {
-                if (skipping) {
-                    if (predicate(iterValue.value, index++)) {
-                        continue;
-                    }
-                    else {
-                        skipping = false;
-                    }
-                }
-
-                yield iterValue.value;
-            }
-        }
-
-        return new Linq<T>(skipWhile);
+        return new Linq<T>(() => Linq.Generators.skipWhile(this.getIter, predicate));
     }
     /**
      * Computes the sum of a sequence of System.Int32 values
@@ -885,21 +903,7 @@ export class Linq<T> implements Iterable<T> {
      * @param count The number of elements to return
      */
     public take(count: number): Linq<T> {
-        let that = this;
-
-        function* take() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorResult<T>;
-
-            while (!(iterValue = iter.next()).done) {
-                if (count > 0) {
-                    yield iterValue.value;
-                    count--;
-                }
-            }
-        }
-
-        return new Linq<T>(take);
+        return new Linq<T>(() => Linq.Generators.take(this.getIter, count));
     }
     /**
      * Returns elements from a sequence as long as a specified condition is true
@@ -907,27 +911,7 @@ export class Linq<T> implements Iterable<T> {
      * @param predicate A function to test each element for a condition
      */
     public takeWhile(predicate: (item: T, index: number) => boolean): Linq<T> {
-        let that = this;
-
-        function* takeWhile() {
-            let iter: Iterator<T> = that.getIter(),
-                iterValue: IteratorResult<T>,
-                taking = true,
-                index = 0;
-
-            while (!(iterValue = iter.next()).done) {
-                if (taking) {
-                    if (predicate(iterValue.value, index++)) {
-                        yield iterValue.value;
-                    }
-                    else {
-                        taking = false;
-                    }
-                }
-            }
-        }
-
-        return new Linq<T>(takeWhile);
+        return new Linq<T>(() => Linq.Generators.takeWhile(this.getIter, predicate));
     }
     /**
      * Creates an array from a the sequence
@@ -1087,7 +1071,7 @@ class LinqOrdered<T> extends Linq<T> {
         this.getIter = this.orderingFunc;
     }
 
-    private *orderingFunc(): Generator<T, void, any> {
+    private orderingFunc(): Iterator<T> {
         let sortedValues = this.underlyingLinq.toArray();
 
         // Sorting processes
@@ -1107,12 +1091,7 @@ class LinqOrdered<T> extends Linq<T> {
             return 0;
         });
 
-        // Output values
-        let iter: Iterator<T> = sortedValues[Symbol.iterator](),
-            iterValue: IteratorResult<T>;
-        while (!(iterValue = iter.next()).done) {
-            yield iterValue.value;
-        }
+        return sortedValues[Symbol.iterator]();
     }
 
     /* Overrides */
