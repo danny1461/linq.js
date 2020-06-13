@@ -109,6 +109,67 @@ export class Linq<T> implements Iterable<T> {
             }
         }
 
+        public static *intersect<U>(getIter: () => Iterator<U>, second: Iterable<U>, fieldSelector: undefined | ((item: U, index: number) => any), except: boolean): Iterator<U> {
+            let set = new Set<any>(),
+                iter = second[Symbol.iterator](),
+                iterValue: IteratorResult<U>,
+                index = 0;
+
+            while (!(iterValue = iter.next()).done) {
+                let intersectValue = fieldSelector
+                    ? fieldSelector(iterValue.value, index++)
+                    : iterValue.value;
+
+                set.add(intersectValue);
+            }
+
+            iter = getIter();
+            index = 0;
+            while (!(iterValue = iter.next()).done) {
+                let intersectValue = fieldSelector
+                    ? fieldSelector(iterValue.value, index++)
+                    : iterValue.value;
+
+                if (set.has(intersectValue) !== except) {
+                    yield iterValue.value;
+                }
+            }
+        }
+
+        public static *groupJoin<U, UInner, UKey, UResult>(getIter: () => Iterator<U>,
+                                                      inner: Iterable<UInner>,
+                                                      sourceSelector: (item: U, index: number) => UKey,
+                                                      innerSelector: (item: UInner, index: number) => UKey,
+                                                      resultSelector: (source: U, item: Linq<UInner>) => UResult): Iterator<UResult> {
+            let iter: Iterator<any> = getIter(),
+                iterValue: IteratorResult<any>,
+                map = new Map<UKey, {source: U, group: UInner[]}>(),
+                index = 0;
+
+            while (!(iterValue = iter.next()).done) {
+                let key = sourceSelector(iterValue.value, index++);
+                map.set(key, {
+                    source: iterValue.value,
+                    group: []
+                });
+            }
+
+            iter = inner[Symbol.iterator]();
+            index = 0;
+            while (!(iterValue = iter.next()).done) {
+                let key = innerSelector(iterValue.value, index++);
+                map.get(key)?.group.push(iterValue.value);
+            }
+
+            iter = map.keys();
+            while (!(iterValue = iter.next()).done) {
+                let entry: any = map.get(iterValue.value);
+                if (entry.group.length > 0) {
+                    yield resultSelector(entry.source, Linq.from(entry.group));
+                }
+            }
+        }
+
         public static *groupByKey<U, UKey>(getIter: () => Iterator<U>, keySelector: (item: U, index: number) => UKey): Iterator<{key: UKey, group: U[]}> {
             let iter = getIter(),
                 iterValue: IteratorResult<any>,
@@ -141,6 +202,31 @@ export class Linq<T> implements Iterable<T> {
 
             while (!(iterValue = iter.next()).done) {
                 yield resultSelector(iterValue.value.key, new Linq<U>(iterValue.value.group));
+            }
+        }
+
+        public static *join<U, UInner, UKey, UResult>(getIter: () => Iterator<U>,
+                                                      inner: Iterable<UInner>,
+                                                      sourceSelector: (item: U, index: number) => UKey,
+                                                      innerSelector: (item: UInner, index: number) => UKey,
+                                                      resultSelector: (source: U, item: UInner) => UResult): Iterator<UResult> {
+            let iter: Iterator<any> = getIter(),
+                iterValue: IteratorResult<any>,
+                map = new Map<UKey, U>(),
+                index = 0;
+
+            while (!(iterValue = iter.next()).done) {
+                let key = sourceSelector(iterValue.value, index++);
+                map.set(key, iterValue.value);
+            }
+
+            iter = inner[Symbol.iterator]();
+            index = 0;
+            while (!(iterValue = iter.next()).done) {
+                let key = innerSelector(iterValue.value, index++);
+                if (map.has(key)) {
+                    yield resultSelector(<U>map.get(key), iterValue.value);
+                }
             }
         }
 
@@ -583,8 +669,27 @@ export class Linq<T> implements Iterable<T> {
 
         return undefined;
     }
-    public except(...items: Linq<T>[]): Linq<T> {
-        throw 'Not Implemented';
+    /**
+     * Produces the set difference of two sequences by using the default equality comparer to compare values
+     * 
+     * @param second An collection whose elements that also occur in the first sequence will cause those elements to be removed from the returned sequence
+     */
+    public except(second: Iterable<T>): Linq<T>;
+    /**
+     * Produces the set difference of two sequences by comparing keys
+     * 
+     * @param second An collection whose elements that also occur in the first sequence will cause those elements to be removed from the returned sequence
+     * @param fieldSelector A function to extract the distict key from each element
+     */
+    public except(second: Iterable<T>, fieldSelector: (item: T, index: number) => any): Linq<T>;
+    /**
+     * Produces the set difference of two sequences
+     * 
+     * @param second An collection whose elements that also occur in the first sequence will cause those elements to be removed from the returned sequence
+     * @param fieldSelector If provided, a function to extract the distict key from each element
+     */
+    public except(second: Iterable<T>, fieldSelector?: (item: T, index: number) => any): Linq<T> {
+        return new Linq<T>(() => Linq.Generators.intersect(this.getIter, second, fieldSelector, true));
     }
     /**
      * Returns the first element of a sequence
@@ -639,14 +744,49 @@ export class Linq<T> implements Iterable<T> {
 
         return new Linq<{key: TKey, group: T[]}>(groupByIter);
     }
-    public groupJoin<TInner, TKey, TResult>(inner: Linq<TInner>, sourceSelector: (item: T, index: number) => TKey, innerSelector: (item: TInner, index: number) => TKey, resultSelector: (source: T, items: Linq<TInner>) => TResult): Linq<TResult> {
-        throw 'Not Implemented';
+    /**
+     * Correlates the elements of two sequences based on equality of keys and groups the results. The default equality comparer is used to compare keys.
+     * 
+     * @param inner The sequence to join to the first sequence
+     * @param sourceSelector A function to extract the join key from each element of the first sequence
+     * @param innerSelector A function to extract the join key from each element of the second sequence
+     * @param resultSelector A function to create a result element from an element from the first sequence and a collection of matching elements from the second sequence
+     */
+    public groupJoin<TInner, TKey, TResult>(inner: Iterable<TInner>, sourceSelector: (item: T, index: number) => TKey, innerSelector: (item: TInner, index: number) => TKey, resultSelector: (source: T, items: Linq<TInner>) => TResult): Linq<TResult> {
+        return new Linq<TResult>(() => Linq.Generators.groupJoin(this.getIter, inner, sourceSelector, innerSelector, resultSelector));
     }
-    public intersect(items: Linq<T>): Linq<T> {
-        throw 'Not Implemented';
+    /**
+     * Produces the set intersection of two sequences by using the default equality comparer to compare values
+     * 
+     * @param second A collection whose distinct elements that also appear in the first sequence will be returned
+     */
+    public intersect(second: Iterable<T>): Linq<T>;
+    /**
+     * Produces the set intersection of two sequences by comparing keys
+     * 
+     * @param second A collection whose distinct elements that also appear in the first sequence will be returned
+     * @param fieldSelector A function to extract the distict key from each element
+     */
+    public intersect(second: Iterable<T>, fieldSelector: (item: T, index: number) => any): Linq<T>;
+    /**
+     * Produces the set intersection of two sequences
+     * 
+     * @param second A collection whose distinct elements that also appear in the first sequence will be returned
+     * @param fieldSelector If provided, a function to extract the distict key from each element
+     */
+    public intersect(second: Iterable<T>, fieldSelector?: (item: T, index: number) => any): Linq<T> {
+        return new Linq<T>(() => Linq.Generators.intersect(this.getIter, second, fieldSelector, false));
     }
-    public join<TInner, TKey, TResult>(inner: Linq<TInner>, sourceSelector: (item: T, index: number) => TKey, innerSelector: (item: TInner, index: number) => TKey, resultSelector: (source: T, item: TInner) => TResult): Linq<TResult> {
-        throw 'Not Implemented';
+    /**
+     * Correlates the elements of two sequences based on matching keys. The default equality comparer is used to compare keys
+     * 
+     * @param inner The sequence to join to the first sequence
+     * @param sourceSelector A function to extract the join key from each element of the first sequence
+     * @param innerSelector A function to extract the join key from each element of the second sequence
+     * @param resultSelector A function to create a result element from two matching elements
+     */
+    public join<TInner, TKey, TResult>(inner: Iterable<TInner>, sourceSelector: (item: T, index: number) => TKey, innerSelector: (item: TInner, index: number) => TKey, resultSelector: (source: T, item: TInner) => TResult): Linq<TResult> {
+        return new Linq<TResult>(() => Linq.Generators.join(this.getIter, inner, sourceSelector, innerSelector, resultSelector));
     }
     /**
      * Concatenates the members of a collection, using the specified separator between each member
@@ -1013,8 +1153,16 @@ export class Linq<T> implements Iterable<T> {
 
         return result;
     }
-    public union(arr: T[]) : Linq<T> {
-        throw 'Not Implemented';
+    /**
+     * Produces the set union of two sequences
+     * 
+     * @param items Any number of Iterable<T> whose distinct elements form the second/third/etc set for the union
+     */
+    public union(second: Iterable<T>) : Linq<T>;
+    public union(second: Iterable<T>, fieldSelector: (item: T, index: number) => any): Linq<T>;
+    public union(second: Iterable<T>, fieldSelector?: (item: T, index: number) => any): Linq<T> {
+        let concatenated = () => Linq.Generators.concat(this.getIter, [second]);
+        return new Linq<T>(() => Linq.Generators.distict<T>(concatenated, fieldSelector));
     }
     /**
      * Filters a sequence of values based on a predicate

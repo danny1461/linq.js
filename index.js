@@ -278,12 +278,15 @@ var Linq = /** @class */ (function () {
         }
         return undefined;
     };
-    Linq.prototype.except = function () {
-        var items = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            items[_i] = arguments[_i];
-        }
-        throw 'Not Implemented';
+    /**
+     * Produces the set difference of two sequences
+     *
+     * @param second An collection whose elements that also occur in the first sequence will cause those elements to be removed from the returned sequence
+     * @param fieldSelector If provided, a function to extract the distict key from each element
+     */
+    Linq.prototype.except = function (second, fieldSelector) {
+        var _this = this;
+        return new Linq(function () { return Linq.Generators.intersect(_this.getIter, second, fieldSelector, true); });
     };
     Linq.prototype.first = function (predicate) {
         var iter = this.getIter(), iterValue, index = 0;
@@ -309,14 +312,39 @@ var Linq = /** @class */ (function () {
         }
         return new Linq(groupByIter);
     };
+    /**
+     * Correlates the elements of two sequences based on equality of keys and groups the results. The default equality comparer is used to compare keys.
+     *
+     * @param inner The sequence to join to the first sequence
+     * @param sourceSelector A function to extract the join key from each element of the first sequence
+     * @param innerSelector A function to extract the join key from each element of the second sequence
+     * @param resultSelector A function to create a result element from an element from the first sequence and a collection of matching elements from the second sequence
+     */
     Linq.prototype.groupJoin = function (inner, sourceSelector, innerSelector, resultSelector) {
-        throw 'Not Implemented';
+        var _this = this;
+        return new Linq(function () { return Linq.Generators.groupJoin(_this.getIter, inner, sourceSelector, innerSelector, resultSelector); });
     };
-    Linq.prototype.intersect = function (items) {
-        throw 'Not Implemented';
+    /**
+     * Produces the set intersection of two sequences
+     *
+     * @param second A collection whose distinct elements that also appear in the first sequence will be returned
+     * @param fieldSelector If provided, a function to extract the distict key from each element
+     */
+    Linq.prototype.intersect = function (second, fieldSelector) {
+        var _this = this;
+        return new Linq(function () { return Linq.Generators.intersect(_this.getIter, second, fieldSelector, false); });
     };
+    /**
+     * Correlates the elements of two sequences based on matching keys. The default equality comparer is used to compare keys
+     *
+     * @param inner The sequence to join to the first sequence
+     * @param sourceSelector A function to extract the join key from each element of the first sequence
+     * @param innerSelector A function to extract the join key from each element of the second sequence
+     * @param resultSelector A function to create a result element from two matching elements
+     */
     Linq.prototype.join = function (inner, sourceSelector, innerSelector, resultSelector) {
-        throw 'Not Implemented';
+        var _this = this;
+        return new Linq(function () { return Linq.Generators.join(_this.getIter, inner, sourceSelector, innerSelector, resultSelector); });
     };
     /**
      * Concatenates the members of a collection, using the specified separator between each member
@@ -555,8 +583,10 @@ var Linq = /** @class */ (function () {
         }
         return result;
     };
-    Linq.prototype.union = function (arr) {
-        throw 'Not Implemented';
+    Linq.prototype.union = function (second, fieldSelector) {
+        var _this = this;
+        var concatenated = function () { return Linq.Generators.concat(_this.getIter, [second]); };
+        return new Linq(function () { return Linq.Generators.distict(concatenated, fieldSelector); });
     };
     /**
      * Filters a sequence of values based on a predicate
@@ -749,6 +779,71 @@ var Linq = /** @class */ (function () {
                 }
             });
         };
+        class_1.intersect = function (getIter, second, fieldSelector, except) {
+            var set, iter, iterValue, index, intersectValue, intersectValue;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        set = new Set(), iter = second[Symbol.iterator](), index = 0;
+                        while (!(iterValue = iter.next()).done) {
+                            intersectValue = fieldSelector
+                                ? fieldSelector(iterValue.value, index++)
+                                : iterValue.value;
+                            set.add(intersectValue);
+                        }
+                        iter = getIter();
+                        index = 0;
+                        _a.label = 1;
+                    case 1:
+                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 4];
+                        intersectValue = fieldSelector
+                            ? fieldSelector(iterValue.value, index++)
+                            : iterValue.value;
+                        if (!(set.has(intersectValue) !== except)) return [3 /*break*/, 3];
+                        return [4 /*yield*/, iterValue.value];
+                    case 2:
+                        _a.sent();
+                        _a.label = 3;
+                    case 3: return [3 /*break*/, 1];
+                    case 4: return [2 /*return*/];
+                }
+            });
+        };
+        class_1.groupJoin = function (getIter, inner, sourceSelector, innerSelector, resultSelector) {
+            var iter, iterValue, map, index, key, key, entry;
+            var _a;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        iter = getIter(), map = new Map(), index = 0;
+                        while (!(iterValue = iter.next()).done) {
+                            key = sourceSelector(iterValue.value, index++);
+                            map.set(key, {
+                                source: iterValue.value,
+                                group: []
+                            });
+                        }
+                        iter = inner[Symbol.iterator]();
+                        index = 0;
+                        while (!(iterValue = iter.next()).done) {
+                            key = innerSelector(iterValue.value, index++);
+                            (_a = map.get(key)) === null || _a === void 0 ? void 0 : _a.group.push(iterValue.value);
+                        }
+                        iter = map.keys();
+                        _b.label = 1;
+                    case 1:
+                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 4];
+                        entry = map.get(iterValue.value);
+                        if (!(entry.group.length > 0)) return [3 /*break*/, 3];
+                        return [4 /*yield*/, resultSelector(entry.source, Linq.from(entry.group))];
+                    case 2:
+                        _b.sent();
+                        _b.label = 3;
+                    case 3: return [3 /*break*/, 1];
+                    case 4: return [2 /*return*/];
+                }
+            });
+        };
         class_1.groupByKey = function (getIter, keySelector) {
             var iter, iterValue, groups, index, key, group, groupsIter;
             return __generator(this, function (_a) {
@@ -791,6 +886,32 @@ var Linq = /** @class */ (function () {
                         _a.sent();
                         return [3 /*break*/, 1];
                     case 3: return [2 /*return*/];
+                }
+            });
+        };
+        class_1.join = function (getIter, inner, sourceSelector, innerSelector, resultSelector) {
+            var iter, iterValue, map, index, key, key;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        iter = getIter(), map = new Map(), index = 0;
+                        while (!(iterValue = iter.next()).done) {
+                            key = sourceSelector(iterValue.value, index++);
+                            map.set(key, iterValue.value);
+                        }
+                        iter = inner[Symbol.iterator]();
+                        index = 0;
+                        _a.label = 1;
+                    case 1:
+                        if (!!(iterValue = iter.next()).done) return [3 /*break*/, 4];
+                        key = innerSelector(iterValue.value, index++);
+                        if (!map.has(key)) return [3 /*break*/, 3];
+                        return [4 /*yield*/, resultSelector(map.get(key), iterValue.value)];
+                    case 2:
+                        _a.sent();
+                        _a.label = 3;
+                    case 3: return [3 /*break*/, 1];
+                    case 4: return [2 /*return*/];
                 }
             });
         };
