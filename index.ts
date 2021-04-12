@@ -1216,7 +1216,7 @@ class LinqOrdered<T> extends Linq<T> {
             keySelector,
             order: ascending ? 1 : -1
         });
-        this.getIter = this.orderingFunc;
+        this.getIter = this.orderingFunc.bind(this);
     }
 
     private orderingFunc(): Iterator<T> {
